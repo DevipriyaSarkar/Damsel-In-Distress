@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Damsel in Distress</string>
+    <string name="panic_release">Panic Release</string>
+    <string name="disabled">Disabled now</string>
+</resources>
