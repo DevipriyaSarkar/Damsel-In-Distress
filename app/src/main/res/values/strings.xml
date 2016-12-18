@@ -2,4 +2,18 @@
     <string name="app_name">Damsel in Distress</string>
     <string name="panic_release">Panic Release</string>
     <string name="disabled">Disabled now</string>
+    <string name="splash_logo_content_desc">Damsel In Distress Logo</string>
+    <string name="welcome_text">Welcome to Damsel In Distress</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="share_action_intent_chooser">Share with …</string>
+    <string name="share_action_text"> Be Safe with Damsel-In-Distress. Download the app now from
+    \nhttps://github.com/DevipriyaSarkar/Damsel-In-Distress/releases </string>
+    <string name="about_title">About</string>
+    <string name="about_neutral_button">Sweet!</string>
+    <string name="about_message">App by Devipriya Sarkar. Say hi to me at devipriyasarkar96@gmail.com. \uD83D\uDE42</string>
 </resources>

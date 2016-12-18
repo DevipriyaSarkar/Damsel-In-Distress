@@ -78,6 +78,6 @@ public class SensorActivity extends Activity implements SensorEventListener {
     }
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    // can be safely ignored for this demo
+        // can be safely ignored for this demo
     }
 }

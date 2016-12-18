@@ -17,7 +17,7 @@
         android:background="@drawable/circlebg"
         android:padding="16dp"
         android:text="@string/panic_release"
-        android:textColor="@color/white"
+        android:textColor="@android:color/white"
         android:textStyle="bold"
         android:textSize="20sp"
         android:id="@+id/panicBtn"
