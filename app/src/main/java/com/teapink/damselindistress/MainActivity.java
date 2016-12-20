@@ -28,8 +28,9 @@ import android.widget.ToggleButton;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    final String TAG = this.getClass().getSimpleName();
     ToggleButton toggleButton;
-    MediaPlayer mp;
+    MediaPlayer mediaPlayer;
     AudioManager audioManager;
 
     @Override
@@ -40,7 +41,7 @@ public class MainActivity extends AppCompatActivity
         setSupportActionBar(toolbar);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+        final ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.addDrawerListener(toggle);
         toggle.syncState();
@@ -60,20 +61,28 @@ public class MainActivity extends AppCompatActivity
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_off));
                     Toast.makeText(getApplicationContext(), "Playing sound", Toast.LENGTH_SHORT).show();
                     setMediaVolumeMax();
-                    mp = MediaPlayer.create(getApplicationContext(), R.raw.sample);
-                    mp.setLooping(true);
-                    mp.start();
+                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.scream);
+                    mediaPlayer.setLooping(true);
+                    mediaPlayer.start();
                     sendSMSMessage();
                 } else {
                     // The toggle is disabled
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_on));
                     Toast.makeText(getApplicationContext(), "Stopped sound", Toast.LENGTH_SHORT).show();
-                    mp.stop();
-                    mp.reset();
+                    mediaPlayer.stop();
+                    mediaPlayer.reset();
                 }
             }
         });
 
+        Bundle bundle = getIntent().getExtras();
+        if(bundle != null) {
+            String calledFrom = bundle.getString("CALLED_FROM");
+            if(calledFrom != null && calledFrom.equals("SensorService")) {
+                Log.d(TAG, "called from");
+                toggleButton.setChecked(true);
+            }
+        }
 
     }
 
@@ -118,10 +127,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (mp != null) {
-            if (mp.isPlaying())
-                mp.stop();
-            mp.release();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying())
+                mediaPlayer.stop();
+            mediaPlayer.release();
         }
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
@@ -170,5 +179,23 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    protected void onPause() {
+        if(mediaPlayer != null)
+        if(mediaPlayer.isPlaying())
+            mediaPlayer.pause();
+        super.onPause();
+    }
+
+    protected void onStop() {
+        super.onStop();
+        if (mediaPlayer != null) {
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
     }
 }
