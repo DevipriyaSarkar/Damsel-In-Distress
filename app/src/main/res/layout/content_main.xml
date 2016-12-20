@@ -13,4 +13,19 @@
     tools:context="com.teapink.damselindistress.MainActivity"
     tools:showIn="@layout/app_bar_main">
 
+    <ToggleButton
+        android:layout_width="200dp"
+        android:layout_height="200dp"
+        android:background="@drawable/circle_bg_on"
+        android:padding="16dp"
+        android:text="@string/panic_release"
+        android:textColor="@android:color/white"
+        android:textStyle="bold"
+        android:textSize="20sp"
+        android:id="@+id/panicBtn"
+        android:layout_centerVertical="true"
+        android:layout_centerHorizontal="true"
+        android:textOff="@string/panic_btn_text_off"
+        android:textOn="@string/panic_btn_text_on" />
+
 </RelativeLayout>

@@ -63,7 +63,7 @@ public class SensorActivity extends Activity implements SensorEventListener {
             tvZ.setText(Float.toString(deltaZ));
             iv.setVisibility(View.VISIBLE);
             if (deltaX > deltaY) {
-                startActivity(new Intent(this, ScreamActivity.class));
+                startActivity(new Intent(this, MainActivity.class));
             }
         }
     }

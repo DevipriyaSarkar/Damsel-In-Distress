@@ -25,7 +25,7 @@ public class SplashActivity extends AppCompatActivity {
 
             SharedPreferences.Editor editor = sp.edit();
             editor.putInt("firstLaunch", 0);
-            editor.commit();
+            editor.apply();
 
             Handler handler = new Handler();
             handler.postDelayed(new Runnable() {
@@ -36,28 +36,6 @@ public class SplashActivity extends AppCompatActivity {
                     startActivity(intent);
                 }
             }, WAIT_TIME);
-
-/*            Runnable onUi = new Runnable() {
-                @Override
-                public void run() {
-                    // this will run on the main UI thread
-                    Intent mainIntent = new Intent(LoadingScreenActivity.this,ProfileData.class);
-                    LoadingScreenActivity.this.startActivity(mainIntent);
-                    LoadingScreenActivity.this.finish();
-                }
-            };
-
-            Runnable background = new Runnable() {
-                @Override
-                public void run() {
-                    // This is the delay
-                    Thread.Sleep( WAIT_TIME );
-                    System.out.println("Going to Profile Data");
-                    uiHandler.post( onUi );
-                }
-            };
-
-            new Thread( background ).start();*/
 
 
         } else {

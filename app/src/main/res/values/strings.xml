@@ -16,4 +16,6 @@
     <string name="about_title">About</string>
     <string name="about_neutral_button">Sweet!</string>
     <string name="about_message">App by Devipriya Sarkar. Say hi to me at devipriyasarkar96@gmail.com. \uD83D\uDE42</string>
+    <string name="panic_btn_text_off">Panic Alarm</string>
+    <string name="panic_btn_text_on">Panic Release</string>
 </resources>
