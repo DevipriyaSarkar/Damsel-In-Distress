@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        startService(new Intent(getApplicationContext(), SensorService.class));
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -181,21 +182,4 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    protected void onPause() {
-        if(mediaPlayer != null)
-        if(mediaPlayer.isPlaying())
-            mediaPlayer.pause();
-        super.onPause();
-    }
-
-    protected void onStop() {
-        super.onStop();
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying()) {
-                mediaPlayer.stop();
-            }
-            mediaPlayer.release();
-            mediaPlayer = null;
-        }
-    }
 }
