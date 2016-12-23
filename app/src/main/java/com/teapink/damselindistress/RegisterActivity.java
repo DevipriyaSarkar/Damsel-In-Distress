@@ -28,6 +28,7 @@ import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.Gson;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -341,9 +342,10 @@ public class RegisterActivity extends AppCompatActivity {
 
         sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
-        editor.putString("phone", userPhone);
-        editor.putString("password", userPassword);
-        editor.apply();
+        Gson gson = new Gson();
+        String json = gson.toJson(user);
+        editor.putString("current_user", json);
+        editor.commit();
 
         finish();
         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);

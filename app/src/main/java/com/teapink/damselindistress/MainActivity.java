@@ -28,6 +28,7 @@ import android.widget.ToggleButton;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.gson.Gson;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -148,11 +149,15 @@ public class MainActivity extends AppCompatActivity
         SharedPreferences sp1 = getSharedPreferences("USER_LOGIN", MODE_PRIVATE);
         SharedPreferences sp2 = getSharedPreferences("FIRST_LAUNCH", MODE_PRIVATE);
 
-        String userPhone = sp1.getString("phone", null);
-        if (userPhone != null) {
+        String currentUser = sp1.getString("current_user", null);
+        if (currentUser != null) {
+            Gson gson = new Gson();
+            User user = gson.fromJson(currentUser, User.class);
+            user.getLocation().setAllowNotification(false);
+            // un-subscribe from SMS alerts when the user logs out
             DatabaseReference databaseRef;
             databaseRef = FirebaseDatabase.getInstance().getReference();
-            databaseRef.child("location").child(userPhone).child("allowNotification").setValue(false);
+            databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());  // update the un-subscription online
         }
 
         SharedPreferences.Editor editor1 = sp1.edit();

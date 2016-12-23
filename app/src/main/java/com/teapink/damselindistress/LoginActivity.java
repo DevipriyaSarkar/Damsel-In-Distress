@@ -24,6 +24,7 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.gson.Gson;
 
 /**
  * A login screen that offers login.
@@ -31,6 +32,7 @@ import com.google.firebase.database.ValueEventListener;
 public class LoginActivity extends AppCompatActivity {
 
     private final String TAG = this.getClass().getSimpleName();
+    private boolean ALREADY_LOGGED_IN = false;
     private SharedPreferences sharedPref;
 
     // UI references.
@@ -70,11 +72,13 @@ public class LoginActivity extends AppCompatActivity {
 
         // check if user is already logged in
         sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
-        String userPhone = sharedPref.getString("phone", null);
-        if (userPhone != null) {
-            String userPassword = sharedPref.getString("password", null);
+        String currentUser = sharedPref.getString("current_user", null);
+        if (currentUser != null) {
+            ALREADY_LOGGED_IN = true;
+            Gson gson = new Gson();
+            User user = gson.fromJson(currentUser, User.class);
             showProgress(true);
-            validateUser(userPhone, userPassword);
+            validateUser(user.getPhone(), user.getInfo().getPassword());
         }
 
         Button registerButton = (Button) findViewById(R.id.registerButton);
@@ -182,7 +186,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    void validateUser(String userPhone, final String userPassword) {
+    void validateUser(final String userPhone, final String userPassword) {
         // validate user
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference().child("users").child(userPhone);
@@ -192,6 +196,23 @@ public class LoginActivity extends AppCompatActivity {
                 User.Info info = dataSnapshot.getValue(User.Info.class);
                 if (info.getPassword().equals(userPassword)) {
                     Log.d(TAG, "User Verified!");
+
+                    if(!ALREADY_LOGGED_IN) {
+                        // new user - save user details in shared pref
+                        User user = new User(userPhone, info, new User.Location());
+                        SharedPreferences.Editor editor = sharedPref.edit();
+                        Gson gson = new Gson();
+                        String json = gson.toJson(user);
+                        editor.putString("current_user", json);
+                        editor.apply();
+
+                        // new user - subscribe to SMS alerts
+                        // do not do if ALREADY_LOGGED_IN - they might have opted out of the alerts in settings
+                        DatabaseReference dbRef;
+                        dbRef = FirebaseDatabase.getInstance().getReference();
+                        dbRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+                    }
+
                     finish();
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     startActivity(intent);
