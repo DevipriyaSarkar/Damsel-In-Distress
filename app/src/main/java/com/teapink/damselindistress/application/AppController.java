@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.application;
 
 import android.app.Application;
 import android.text.TextUtils;

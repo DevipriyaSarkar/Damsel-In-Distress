@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.services;
 
 import android.app.IntentService;
 import android.content.Context;
@@ -10,6 +10,8 @@ import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.support.v4.content.IntentCompat;
 import android.util.Log;
+
+import com.teapink.damselindistress.activities.MainActivity;
 
 
 public class SensorService extends IntentService implements SensorEventListener {

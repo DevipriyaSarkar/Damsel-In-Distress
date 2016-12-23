@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.services;
 
 
 import android.app.AlertDialog;

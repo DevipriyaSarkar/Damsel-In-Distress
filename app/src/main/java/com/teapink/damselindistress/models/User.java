@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.models;
 
 public class User {
     public String phone;

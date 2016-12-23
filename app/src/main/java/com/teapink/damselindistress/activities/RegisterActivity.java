@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.activities;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -29,6 +29,9 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
+import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.application.AppController;
+import com.teapink.damselindistress.models.User;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -36,9 +39,9 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.teapink.damselindistress.AppController.START_PHONE_VERIFICATION_URL;
-import static com.teapink.damselindistress.AppController.TWILIO_API_KEY;
-import static com.teapink.damselindistress.AppController.VERIFY_CODE_URL;
+import static com.teapink.damselindistress.application.AppController.START_PHONE_VERIFICATION_URL;
+import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
+import static com.teapink.damselindistress.application.AppController.VERIFY_CODE_URL;
 
 /**
  * A login screen that offers login.

@@ -1,4 +1,4 @@
-package com.teapink.damselindistress;
+package com.teapink.damselindistress.activities;
 
 import android.content.Context;
 import android.content.DialogInterface;
@@ -29,6 +29,9 @@ import android.widget.ToggleButton;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
+import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.models.User;
+import com.teapink.damselindistress.services.SensorService;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
