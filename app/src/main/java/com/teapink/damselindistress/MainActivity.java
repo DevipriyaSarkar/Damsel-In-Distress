@@ -3,6 +3,7 @@ package com.teapink.damselindistress;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
@@ -24,6 +25,9 @@ import android.widget.CompoundButton;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
+
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -140,6 +144,30 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    public void logOut() {
+        SharedPreferences sp1 = getSharedPreferences("USER_LOGIN", MODE_PRIVATE);
+        SharedPreferences sp2 = getSharedPreferences("FIRST_LAUNCH", MODE_PRIVATE);
+
+        String userPhone = sp1.getString("phone", null);
+        if (userPhone != null) {
+            DatabaseReference databaseRef;
+            databaseRef = FirebaseDatabase.getInstance().getReference();
+            databaseRef.child("location").child(userPhone).child("allowNotification").setValue(false);
+        }
+
+        SharedPreferences.Editor editor1 = sp1.edit();
+        SharedPreferences.Editor editor2 = sp2.edit();
+        editor1.clear();
+        editor1.commit();
+        editor2.clear();
+        editor2.commit();
+
+        finish();
+        Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+    }
+
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -149,7 +177,10 @@ public class MainActivity extends AppCompatActivity
         if (id == R.id.nav_contacts) {
             // manage emergency contacts
         } else if (id == R.id.nav_settings) {
+            // app settings
 
+        } else if (id == R.id.nav_log_out) {
+            logOut();
         } else if (id == R.id.nav_share) {
             // share the app with others
             Intent share = new Intent(android.content.Intent.ACTION_SEND);

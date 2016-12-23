@@ -10,6 +10,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -17,6 +18,12 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 /**
  * A login screen that offers login.
@@ -63,11 +70,11 @@ public class LoginActivity extends AppCompatActivity {
 
         // check if user is already logged in
         sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
-        String user_phone = sharedPref.getString("phone", null);
-        if (user_phone != null) {
-            String user_password = sharedPref.getString("password", null);
+        String userPhone = sharedPref.getString("phone", null);
+        if (userPhone != null) {
+            String userPassword = sharedPref.getString("password", null);
             showProgress(true);
-            validateUser(user_phone, user_password);
+            validateUser(userPhone, userPassword);
         }
 
         Button registerButton = (Button) findViewById(R.id.registerButton);
@@ -175,8 +182,27 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    void validateUser(String user_phone, String user_password) {
+    void validateUser(String userPhone, final String userPassword) {
         // validate user
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference().child("users").child(userPhone);
+        databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                User.Info info = dataSnapshot.getValue(User.Info.class);
+                if (info.getPassword().equals(userPassword)) {
+                    Log.d(TAG, "User Verified!");
+                    finish();
+                    Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                    startActivity(intent);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+            }
+        });
     }
 
 }

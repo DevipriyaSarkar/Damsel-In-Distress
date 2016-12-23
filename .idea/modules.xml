@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/DamselNew.iml" filepath="$PROJECT_DIR$/DamselNew.iml" />
+      <module fileurl="file://$PROJECT_DIR$/Damsel-In-Distress.iml" filepath="$PROJECT_DIR$/Damsel-In-Distress.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
     </modules>
   </component>

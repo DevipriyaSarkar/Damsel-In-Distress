@@ -4,12 +4,12 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.Dialog;
+import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.app.AppCompatDialog;
 import android.text.TextUtils;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -26,6 +26,8 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -43,7 +45,6 @@ import static com.teapink.damselindistress.AppController.VERIFY_CODE_URL;
 public class RegisterActivity extends AppCompatActivity {
 
     private final String TAG = this.getClass().getSimpleName();
-    private static boolean PHONE_VERIFIED = false;
     private SharedPreferences sharedPref;
 
     // UI references.
@@ -203,14 +204,14 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    void verifyPhone(final String user_name, final String user_phone, final String user_password) {
+    void verifyPhone(final String userName, final String userPhone, final String userPassword) {
 
         String urlString = START_PHONE_VERIFICATION_URL;
 
         Map<String, String> startParams = new HashMap<>();
         startParams.put("api_key", TWILIO_API_KEY);
         startParams.put("via", "sms");
-        startParams.put("phone_number", user_phone);
+        startParams.put("phone_number", userPhone);
         startParams.put("country_code", "91");
         startParams.put("locale", "en");
 
@@ -241,7 +242,7 @@ public class RegisterActivity extends AppCompatActivity {
                                         String verCode = verCodeEditText.getText().toString().trim();
                                         if (isCodeValid(verCode)) {
                                             showProgress(true);
-                                            verifyOTP(user_name, user_phone, user_password, verCode);
+                                            verifyOTP(userName, userPhone, userPassword, verCode);
                                         } else {
                                             Toast.makeText(getApplicationContext(), "Please enter valid OTP",
                                                     Toast.LENGTH_SHORT).show();
@@ -277,10 +278,10 @@ public class RegisterActivity extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
 
-    void verifyOTP(final String user_name, final String user_phone, final String user_password, String verCode) {
+    void verifyOTP(final String userName, final String userPhone, final String userPassword, String verCode) {
 
         String urlString = VERIFY_CODE_URL + "?api_key=" + TWILIO_API_KEY +
-                "&phone_number=" + user_phone +
+                "&phone_number=" + userPhone +
                 "&country_code=" + "91" +
                 "&verification_code=" + verCode;
 
@@ -298,7 +299,7 @@ public class RegisterActivity extends AppCompatActivity {
                                 Toast.makeText(getApplicationContext(), "OTP Verified.",
                                         Toast.LENGTH_SHORT).show();
                                 verifyPhoneDialog.cancel();
-                                registerUser(user_name, user_phone, user_password);
+                                registerUser(userName, userPhone, userPassword);
                             } else {
                                 showProgress(false);
                                 Toast.makeText(getApplicationContext(), "Incorrect OTP. Try again.",
@@ -327,8 +328,26 @@ public class RegisterActivity extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
 
-    void registerUser(String user_name, String user_phone, String user_password) {
+    void registerUser(String userName, String userPhone, String userPassword) {
         // register user
+        User user = new User(userPhone,
+                new User.Info(userName, userPassword),
+                new User.Location());
+
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference();
+        databaseRef.child("users").child(userPhone).setValue(user.getInfo());
+        databaseRef.child("location").child(userPhone).setValue(user.getLocation());
+
+        sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString("phone", userPhone);
+        editor.putString("password", userPassword);
+        editor.apply();
+
+        finish();
+        Intent intent = new Intent(getApplicationContext(), LoginActivity.class);
+        startActivity(intent);
     }
 
 }
