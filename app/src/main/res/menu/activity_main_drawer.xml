@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group>
+    <group android:id="@+id/appFeatureGroup">
         <item
             android:id="@+id/nav_contacts"
             android:icon="@drawable/contacts"
@@ -16,7 +16,7 @@
             android:title="Log Out" />
     </group>
 
-    <group>
+    <group android:id="@+id/appAboutGroup">
         <item
             android:id="@+id/nav_invite"
             android:icon="@drawable/invite_friend"

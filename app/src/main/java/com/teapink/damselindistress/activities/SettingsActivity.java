@@ -15,6 +15,7 @@ import android.preference.SwitchPreference;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -48,14 +49,25 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             = new Preference.OnPreferenceChangeListener() {
         @Override
         public boolean onPreferenceChange(Preference preference, Object value) {
+            int flag = 0;
             if (user != null) {
                 switch (preference.getKey()) {
                     case "prefName":
+                        if (isNameInvalid(value.toString().trim())) {
+                            flag = 1;
+                            Toast.makeText(preference.getContext(), "Entered user name not valid.", Toast.LENGTH_SHORT).show();
+                            break;
+                        }
                         preference.setSummary(value.toString());
                         user.getInfo().setName(value.toString());
                         updateAllDB(user);
                         break;
                     case "prefPhone":
+                        if (isPhoneInvalid(value.toString().trim())) {
+                            flag = 1;
+                            Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
+                            break;
+                        }
                         preference.setSummary(value.toString());
                         String oldPhone = user.getPhone();
                         user.setPhone(value.toString());
@@ -68,7 +80,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     default:
                         break;
                 }
-                return true;
+                return flag == 0;
             }
             return true;
         }
@@ -269,5 +281,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         editor.putString("current_user", json);
         editor.apply();
         super.onPause();
+    }
+
+    private static boolean isNameInvalid(String name) {
+        return name.matches(".*\\d+.*") || name.equals("");
+    }
+
+    private static boolean isPhoneInvalid(String phone) {
+        return phone.trim().length() < 10 || phone.equals("");
     }
 }
