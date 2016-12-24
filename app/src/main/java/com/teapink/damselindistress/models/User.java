@@ -68,12 +68,12 @@ public class User {
     public static class Location {
         public String latitude;
         public String longitude;
-        public boolean allowNotification;   // user has agreed to receive SMS if someone nearby is in danger
+        public boolean alertAllowed;   // user has agreed to receive SMS if someone nearby is in danger
 
         public Location() {
             this.latitude = "null";
             this.longitude = "null";
-            this.allowNotification = true;
+            this.alertAllowed = true;
         }
         public Location(String latitude, String longitude) {
             this.latitude = latitude;
@@ -88,8 +88,8 @@ public class User {
             this.longitude = longitude;
         }
 
-        public void setAllowNotification(boolean allowNotification) {
-            this.allowNotification = allowNotification;
+        public void setAlertAllowed(boolean alertAllowed) {
+            this.alertAllowed = alertAllowed;
         }
 
         public String getLatitude() {
@@ -100,8 +100,8 @@ public class User {
             return longitude;
         }
 
-        public boolean isAllowNotification() {
-            return allowNotification;
+        public boolean hasAlertAllowed() {
+            return alertAllowed;
         }
     }
 

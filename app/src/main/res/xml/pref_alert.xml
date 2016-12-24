@@ -1,0 +1,12 @@
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- A 'parent' preference, which enables/disables child preferences (below)
+         when checked/unchecked. -->
+    <SwitchPreference
+        android:defaultValue="true"
+        android:key="prefAlert"
+        android:title="@string/pref_title_text_alert"
+        android:summaryOn="@string/pref_summary_text_alert_on"
+        android:summaryOff="@string/pref_summary_text_alert_off" />
+
+</PreferenceScreen>

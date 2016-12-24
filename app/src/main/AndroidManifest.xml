@@ -49,6 +49,14 @@
             android:label="@string/title_activity_register"
             android:noHistory="true"
             android:theme="@style/AppTheme.NoActionBar.StatusBar" />
+        <activity
+            android:name=".activities.SettingsActivity"
+            android:label="@string/title_activity_settings"
+            android:parentActivityName=".activities.MainActivity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.teapink.damselindistress.activities.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

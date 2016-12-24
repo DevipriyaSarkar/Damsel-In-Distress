@@ -93,6 +93,10 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
+        SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
+        String user = sp.getString("current_user", null);
+        Log.d(TAG, "Current User: " + user);
+
     }
 
     private void sendSMSMessage() {
@@ -149,14 +153,14 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void logOut() {
-        SharedPreferences sp1 = getSharedPreferences("USER_LOGIN", MODE_PRIVATE);
+        SharedPreferences sp1 = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
         SharedPreferences sp2 = getSharedPreferences("FIRST_LAUNCH", MODE_PRIVATE);
 
         String currentUser = sp1.getString("current_user", null);
         if (currentUser != null) {
             Gson gson = new Gson();
             User user = gson.fromJson(currentUser, User.class);
-            user.getLocation().setAllowNotification(false);
+            user.getLocation().setAlertAllowed(false);
             // un-subscribe from SMS alerts when the user logs out
             DatabaseReference databaseRef;
             databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -186,7 +190,8 @@ public class MainActivity extends AppCompatActivity
             // manage emergency contacts
         } else if (id == R.id.nav_settings) {
             // app settings
-
+            Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_log_out) {
             logOut();
         } else if (id == R.id.nav_share) {

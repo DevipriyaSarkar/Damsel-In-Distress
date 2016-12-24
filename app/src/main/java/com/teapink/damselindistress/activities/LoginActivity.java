@@ -8,6 +8,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -73,7 +74,7 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         // check if user is already logged in
-        sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
+        sharedPref = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
         String currentUser = sharedPref.getString("current_user", null);
         if (currentUser != null) {
             ALREADY_LOGGED_IN = true;
@@ -207,6 +208,15 @@ public class LoginActivity extends AppCompatActivity {
                         String json = gson.toJson(user);
                         editor.putString("current_user", json);
                         editor.apply();
+
+                        // initialise settings pref
+                        SharedPreferences settingsPref = PreferenceManager
+                                .getDefaultSharedPreferences(getApplicationContext());
+                        SharedPreferences.Editor settingsEditor = settingsPref.edit();
+                        settingsEditor.putString("prefName", user.getInfo().getName());
+                        settingsEditor.putString("prefPhone", user.getPhone());
+                        settingsEditor.putBoolean("prefAlert", user.getLocation().hasAlertAllowed());
+                        settingsEditor.apply();
 
                         // new user - subscribe to SMS alerts
                         // do not do if ALREADY_LOGGED_IN - they might have opted out of the alerts in settings

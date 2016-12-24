@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Log;
@@ -49,7 +50,6 @@ import static com.teapink.damselindistress.application.AppController.VERIFY_CODE
 public class RegisterActivity extends AppCompatActivity {
 
     private final String TAG = this.getClass().getSimpleName();
-    private SharedPreferences sharedPref;
 
     // UI references.
     private EditText mNameView, mPhoneView, mPasswordView;
@@ -343,12 +343,21 @@ public class RegisterActivity extends AppCompatActivity {
         databaseRef.child("users").child(userPhone).setValue(user.getInfo());
         databaseRef.child("location").child(userPhone).setValue(user.getLocation());
 
-        sharedPref = getSharedPreferences("USER_LOGIN", Context.MODE_PRIVATE);
+        SharedPreferences sharedPref = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPref.edit();
         Gson gson = new Gson();
         String json = gson.toJson(user);
         editor.putString("current_user", json);
         editor.commit();
+
+        // initialise settings pref
+        SharedPreferences settingsPref = PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor settingsEditor = settingsPref.edit();
+        settingsEditor.putString("prefName", user.getInfo().getName());
+        settingsEditor.putString("prefPhone", user.getPhone());
+        settingsEditor.putBoolean("prefAlert", user.getLocation().hasAlertAllowed());
+        settingsEditor.apply();
 
         finish();
         Intent intent = new Intent(getApplicationContext(), LoginActivity.class);

@@ -44,4 +44,24 @@
     <string name="verification_code">Verification Code</string>
     <string name="verify_btn_text">Verify</string>
     <string name="error_incorrect_credentials">Could not verify.</string>
+    <string name="title_activity_settings">Settings</string>
+
+    <!-- Strings related to Settings -->
+
+    <!-- General Settings -->
+    <string name="pref_header_general">General</string>
+
+    <string name="pref_title_display_name">Display name</string>
+    <string name="pref_default_display_name">Unknown</string>
+
+    <string name="pref_title_phone_number">Phone Number</string>
+    <string name="pref_default_phone_number">null</string>
+
+    <!-- SMS Alert Settings -->
+    <string name="pref_header_alert">SMS Alerts</string>
+
+    <string name="pref_title_text_alert">Receive SMS Alerts</string>
+    <string name="pref_summary_text_alert_on">Receive SMS alerts from other Damsels around you in danger</string>
+    <string name="pref_summary_text_alert_off">Not receiving SMS alerts from other Damsels around you in danger.
+        \nPlease consider switching this option on and helping those who need you.</string>
 </resources>
