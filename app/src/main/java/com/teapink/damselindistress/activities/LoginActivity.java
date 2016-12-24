@@ -27,7 +27,10 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.models.Contact;
 import com.teapink.damselindistress.models.User;
+
+import java.util.ArrayList;
 
 /**
  * A login screen that offers login.
@@ -223,12 +226,40 @@ public class LoginActivity extends AppCompatActivity {
                         DatabaseReference dbRef;
                         dbRef = FirebaseDatabase.getInstance().getReference();
                         dbRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+
+                        getEmergencyContacts(userPhone);    // retrieve all emergency contacts
                     }
 
                     finish();
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     startActivity(intent);
                 }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+            }
+        });
+    }
+
+    void getEmergencyContacts(String userPhone) {
+        final ArrayList<Contact> emergencyContactList = new ArrayList<>();
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference().child("emergencyList").child(userPhone);
+        databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    Contact contact = postSnapshot.getValue(Contact.class);
+                    emergencyContactList.add(contact);
+                }
+                // add to shared preference
+                Gson gson = new Gson();
+                String jsonArrayList = gson.toJson(emergencyContactList);
+                SharedPreferences.Editor editor = sharedPref.edit();
+                editor.putString("contact_list", jsonArrayList);
+                editor.apply();
             }
 
             @Override

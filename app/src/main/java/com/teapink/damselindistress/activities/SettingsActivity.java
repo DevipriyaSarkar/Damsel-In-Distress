@@ -1,6 +1,5 @@
 package com.teapink.damselindistress.activities;
 
-
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
@@ -10,22 +9,24 @@ import android.os.Build;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
-import android.preference.SwitchPreference;
-import android.support.v7.app.ActionBar;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.util.Log;
-import android.view.MenuItem;
+import android.preference.SwitchPreference;
 import android.support.v4.app.NavUtils;
-import android.widget.Switch;
+import android.support.v7.app.ActionBar;
+import android.view.MenuItem;
 
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.models.Contact;
 import com.teapink.damselindistress.models.User;
 import com.teapink.damselindistress.utilities.AppCompatPreferenceActivity;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,6 +38,7 @@ import java.util.List;
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
     private static User user = new User();
+    private static ArrayList<Contact> contactArrayList;
 
     /**
      * A preference value change listener that updates the user details and summary
@@ -86,9 +88,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // remove children with old phone
             databaseRef.child("users").child(oldPhone).removeValue();
             databaseRef.child("location").child(oldPhone).removeValue();
+            databaseRef.child("emergencyList").child(oldPhone).removeValue();
             // add children with new phone
             databaseRef.child("users").child(user.getPhone()).setValue(user.getInfo());
             databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+            for (Contact contact : contactArrayList)
+                databaseRef.child("emergencyList").child(user.getPhone()).push().setValue(contact);
         }
     };
 
@@ -137,6 +142,13 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             Gson gson = new Gson();
             user = gson.fromJson(currentUser, User.class);
         }
+        String jsonArrayList = sp.getString("contact_list", null);
+        if (jsonArrayList != null) {
+            Gson gson = new Gson();
+            Type type = new TypeToken<ArrayList<Contact>>() {}.getType();
+            contactArrayList = gson.fromJson(jsonArrayList, type);
+        }
+
     }
 
     /**

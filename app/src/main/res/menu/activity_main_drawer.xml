@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <group android:checkableBehavior="single">
+    <group>
         <item
             android:id="@+id/nav_contacts"
             android:icon="@drawable/contacts"
@@ -16,17 +16,15 @@
             android:title="Log Out" />
     </group>
 
-    <item android:title="Communicate">
-        <menu>
-            <item
-                android:id="@+id/nav_share"
-                android:icon="@drawable/share"
-                android:title="Share" />
-            <item
-                android:id="@+id/nav_about"
-                android:icon="@drawable/about"
-                android:title="About" />
-        </menu>
-    </item>
+    <group>
+        <item
+            android:id="@+id/nav_invite"
+            android:icon="@drawable/invite_friend"
+            android:title="Invite Friends" />
+        <item
+            android:id="@+id/nav_about"
+            android:icon="@drawable/about"
+            android:title="About" />
+    </group>
 
 </menu>

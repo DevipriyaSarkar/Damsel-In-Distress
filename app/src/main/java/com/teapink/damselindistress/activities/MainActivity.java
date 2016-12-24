@@ -188,13 +188,15 @@ public class MainActivity extends AppCompatActivity
 
         if (id == R.id.nav_contacts) {
             // manage emergency contacts
+            Intent intent = new Intent(getApplicationContext(), EmergencyContactsActivity.class);
+            startActivity(intent);
         } else if (id == R.id.nav_settings) {
             // app settings
             Intent intent = new Intent(getApplicationContext(), SettingsActivity.class);
             startActivity(intent);
         } else if (id == R.id.nav_log_out) {
             logOut();
-        } else if (id == R.id.nav_share) {
+        } else if (id == R.id.nav_invite) {
             // share the app with others
             Intent share = new Intent(android.content.Intent.ACTION_SEND);
             share.setType("text/plain");
