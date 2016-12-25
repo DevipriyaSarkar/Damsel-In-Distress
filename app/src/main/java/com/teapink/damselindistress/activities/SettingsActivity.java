@@ -283,6 +283,33 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         super.onPause();
     }
 
+    // not really required now
+/*    @Override
+    protected void onPause() {
+        // update shared preference
+        SharedPreferences sharedPref = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
+
+        SharedPreferences settingsPref = PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext());
+        String updatedName = settingsPref.getString("prefName", null);
+        String updatedPhone = settingsPref.getString("prefPhone", null);
+        boolean updatedAlertChoice = settingsPref.getBoolean("prefAlert", true);
+
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Gson gson = new Gson();
+        User updatedUser = user;    // get old user details
+
+        // update changes from settings pref
+        updatedUser.setPhone(updatedPhone);
+        updatedUser.getInfo().setName(updatedName);
+        updatedUser.getLocation().setAlertAllowed(updatedAlertChoice);
+
+        String json = gson.toJson(updatedUser);
+        editor.putString("current_user", json);
+        editor.apply();
+        super.onPause();
+    }*/
+
     private static boolean isNameInvalid(String name) {
         return name.matches(".*\\d+.*") || name.equals("");
     }

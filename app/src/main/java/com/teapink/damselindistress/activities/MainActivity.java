@@ -31,7 +31,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.teapink.damselindistress.R;
 import com.teapink.damselindistress.models.User;
-import com.teapink.damselindistress.services.SensorService;
+import com.teapink.damselindistress.services.ShakeSensorService;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -45,7 +45,7 @@ public class MainActivity extends AppCompatActivity
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        startService(new Intent(getApplicationContext(), SensorService.class));
+        startService(new Intent(getApplicationContext(), ShakeSensorService.class));
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -59,9 +59,6 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         toggleButton = (ToggleButton) findViewById(R.id.panicBtn);
-
-/*        HardwareButtonReceiver receiver = new HardwareButtonReceiver();
-        registerMediaButtonEventReceiver(receiver);*/
 
         toggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -85,18 +82,24 @@ public class MainActivity extends AppCompatActivity
         });
 
         Bundle bundle = getIntent().getExtras();
-        if(bundle != null) {
+        if (bundle != null) {
             String calledFrom = bundle.getString("CALLED_FROM");
-            if(calledFrom != null && calledFrom.equals("SensorService")) {
+            if (calledFrom != null && calledFrom.equals("ShakeSensorService")) {
                 Log.d(TAG, "called from");
                 toggleButton.setChecked(true);
             }
         }
 
-        SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
+        // test shared pref contents
+/*        SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
         String user = sp.getString("current_user", null);
         Log.d(TAG, "Current User: " + user);
 
+        sp = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        String prefName = sp.getString("prefName", null);
+        String prefPhone = sp.getString("prefPhone", null);
+        boolean prefAlert = sp.getBoolean("prefAlert", true);
+        Log.d(TAG, "Current Settings User: " + "Name: " + prefName + " Phone: " + prefPhone + " Alert: " + prefAlert);*/
     }
 
     private void sendSMSMessage() {
@@ -110,7 +113,7 @@ public class MainActivity extends AppCompatActivity
             Toast.makeText(getApplicationContext(), "SMS sent.", Toast.LENGTH_LONG).show();
             //Intent intent = new Intent(Intent.ACTION_CALL);
 
-//            intent.setData(Uri.parse("tel:" + phoneNo));
+            //intent.setData(Uri.parse("tel:" + phoneNo));
             //          startActivity(intent);
             //        Toast.makeText(getApplicationContext(), "Calling", Toast.LENGTH_LONG).show();
         }
@@ -123,19 +126,9 @@ public class MainActivity extends AppCompatActivity
 
     private void setMediaVolumeMax() {
         audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
-        int i = audioManager.getStreamMaxVolume(3);
-        audioManager.setStreamVolume(3, i, 1);
+        int maxVolume = audioManager.getStreamMaxVolume(3);
+        audioManager.setStreamVolume(3, maxVolume, 1);
     }
-
-/*
-    private class HardwareButtonReceiver implements BroadcastReceiver {
-        void onReceive(Intent intent) {
-            KeyEvent e = (KeyEvent) intent.getExtra(Intent.EXTRA_KEY_EVENT);
-            if(e.getKeyCode() == KeyEvent.KEYCODE_VOLUME_UP) {
-                //code
-            }
-        }
-    }*/
 
     @Override
     public void onBackPressed() {
@@ -173,6 +166,9 @@ public class MainActivity extends AppCompatActivity
         editor1.commit();
         editor2.clear();
         editor2.commit();
+
+        // un-register from the service
+        stopService(new Intent(getApplicationContext(), ShakeSensorService.class));
 
         finish();
         Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
