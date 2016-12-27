@@ -18,6 +18,7 @@ import android.preference.SwitchPreference;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
+import android.text.InputType;
 import android.util.Log;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -26,6 +27,7 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -104,28 +106,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             return true;
         }
 
-        void updateAllDB(User user) {
-            // update Firebase DB Online
-            DatabaseReference databaseRef;
-            databaseRef = FirebaseDatabase.getInstance().getReference();
-            databaseRef.child("users").child(user.getPhone()).setValue(user.getInfo());
-            databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
-        }
-
-        void updateAllDB(String oldPhone, User user) {
-            // update Firebase DB Online
-            DatabaseReference databaseRef;
-            databaseRef = FirebaseDatabase.getInstance().getReference();
-            // remove children with old phone
-            databaseRef.child("users").child(oldPhone).removeValue();
-            databaseRef.child("location").child(oldPhone).removeValue();
-            databaseRef.child("emergencyList").child(oldPhone).removeValue();
-            // add children with new phone
-            databaseRef.child("users").child(user.getPhone()).setValue(user.getInfo());
-            databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
-            for (Contact contact : contactArrayList)
-                databaseRef.child("emergencyList").child(user.getPhone()).push().setValue(contact);
-        }
     };
 
     private static Preference.OnPreferenceClickListener phonePreferenceClickListener
@@ -137,15 +117,19 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(preference.getContext());
                 alertDialog.setTitle("Phone Number");
                 final EditText phoneInputEditText = new EditText(preference.getContext());
+                phoneInputEditText.setInputType(InputType.TYPE_CLASS_PHONE);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT);
                 phoneInputEditText.setLayoutParams(lp);
+                phoneInputEditText.setText(user.getPhone());
+                phoneInputEditText.setSelectAllOnFocus(true);
                 alertDialog.setView(phoneInputEditText);
 
                 alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String value = phoneInputEditText.getText().toString().trim();
+                        value = value.replaceAll("\\s", "");    // remove all spaces
                         if (!isPhoneInvalid(value)) {
                             verifyPhone(value, preference);
                         } else {
@@ -293,6 +277,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreference(findPreference("prefName"));
+            bindPreference(findPreference("prefPhone"));
             findPreference("prefPhone").setOnPreferenceClickListener(phonePreferenceClickListener);
         }
 
@@ -377,8 +362,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_VERIFICATION) {
             if (resultCode == RESULT_OK) {
-                bindPreference(findPreference("prefPhone"));
                 Log.d(TAG, "OnActivityResult RESULT_OK");
+                String newPhone = data.getExtras().getString("NEW_PHONE");
+                String oldPhone = user.getPhone();
+                user.setPhone(newPhone);
+                updateAllDB(oldPhone, user);
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(),
                         "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
@@ -421,8 +409,10 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                             if (success) {
                                 hidePDialog();
                                 Intent intent = new Intent(preference.getContext(), OTPVerificationActivity.class);
-                                intent.putExtra("USER_PHONE", userPhone);
-                                preference.setIntent(intent);
+                                Bundle bundle = new Bundle();
+                                bundle.putString("USER_PHONE", userPhone);
+                                bundle.putString("CALLING_ACTIVITY", "SettingsActivity");
+                                intent.putExtras(bundle);
                                 Activity activity = (Activity) preference.getContext();
                                 activity.startActivityForResult(intent, REQUEST_VERIFICATION);
                             } else {
@@ -443,6 +433,8 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.d("SettingsActivity", "Error in " + "SettingsActivity" + " : " + error.getMessage());
+                if (error instanceof TimeoutError)
+                    VolleyLog.d("SettingsActivity", "Timeout Error");
                 hidePDialog();
                 Toast.makeText(preference.getContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -460,6 +452,29 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     private static void hidePDialog() {
         if (pDialog.isShowing())
             pDialog.dismiss();
+    }
+
+    private static void updateAllDB(User user) {
+        // update Firebase DB Online
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference();
+        databaseRef.child("users").child(user.getPhone()).setValue(user.getInfo());
+        databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+    }
+
+    private static void updateAllDB(String oldPhone, User user) {
+        // update Firebase DB Online
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference();
+        // remove children with old phone
+        databaseRef.child("users").child(oldPhone).removeValue();
+        databaseRef.child("location").child(oldPhone).removeValue();
+        databaseRef.child("emergencyList").child(oldPhone).removeValue();
+        // add children with new phone
+        databaseRef.child("users").child(user.getPhone()).setValue(user.getInfo());
+        databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+        for (Contact contact : contactArrayList)
+            databaseRef.child("emergencyList").child(user.getPhone()).push().setValue(contact);
     }
 
 

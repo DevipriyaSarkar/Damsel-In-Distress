@@ -24,6 +24,7 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -106,6 +107,7 @@ public class RegisterActivity extends AppCompatActivity {
         // Store values at the time of the login attempt.
         name = mNameView.getText().toString().trim();
         phone = mPhoneView.getText().toString().trim();
+        phone = phone.replaceAll("\\s", "");    // remove all spaces
         password = mPasswordView.getText().toString().trim();
 
         boolean cancel = false;
@@ -250,6 +252,8 @@ public class RegisterActivity extends AppCompatActivity {
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.d(TAG, "Error in " + TAG + " : " + error.getMessage());
                 showProgress(false);
+                if (error instanceof TimeoutError)
+                    VolleyLog.d(TAG, "Error in " + TAG + " : " + "Timeout Error");
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });

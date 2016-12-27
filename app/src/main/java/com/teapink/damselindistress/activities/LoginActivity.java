@@ -113,6 +113,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Store values at the time of the login attempt.
         String phone = mPhoneView.getText().toString();
+        phone = phone.replaceAll("\\s", "");    // remove all spaces
         String password = mPasswordView.getText().toString();
 
         boolean cancel = false;

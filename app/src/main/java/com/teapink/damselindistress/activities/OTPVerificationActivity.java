@@ -4,8 +4,10 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +18,7 @@ import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
+import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
@@ -31,7 +34,7 @@ import static com.teapink.damselindistress.application.AppController.VERIFY_CODE
 public class OTPVerificationActivity extends AppCompatActivity {
 
     final String TAG = this.getClass().getSimpleName();
-    String userPhone;
+    String userPhone, callingActivity;
     View verificationFormView, progressView;
     TextView invalidPhoneView;
     EditText verCodeEditText;
@@ -51,6 +54,7 @@ public class OTPVerificationActivity extends AppCompatActivity {
         Bundle bundle = getIntent().getExtras();
         if (bundle != null) {
             userPhone = bundle.getString("USER_PHONE", null);
+            callingActivity = bundle.getString("CALLING_ACTIVITY", null);
 
             verifyBtn.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -95,7 +99,15 @@ public class OTPVerificationActivity extends AppCompatActivity {
                             if (success) {
                                 Toast.makeText(getApplicationContext(), "OTP Verified.",
                                         Toast.LENGTH_SHORT).show();
+                                if (callingActivity.equals("SettingsActivity")) {    // update the preference
+                                    SharedPreferences settingsPref = PreferenceManager
+                                            .getDefaultSharedPreferences(getApplicationContext());
+                                    SharedPreferences.Editor settingsEditor = settingsPref.edit();
+                                    settingsEditor.putString("prefPhone", userPhone);
+                                    settingsEditor.commit();
+                                }
                                 Intent intent = new Intent();
+                                intent.putExtra("NEW_PHONE", userPhone);
                                 setResult(RESULT_OK, intent);
                                 finish();
                             } else {
@@ -117,6 +129,8 @@ public class OTPVerificationActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 VolleyLog.d(TAG, "Error in " + TAG + " : " + error.getMessage());
+                if (error instanceof TimeoutError)
+                    VolleyLog.d(TAG, "Error in " + TAG + " : " + "Timeout Error");
                 showProgress(false);
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
             }

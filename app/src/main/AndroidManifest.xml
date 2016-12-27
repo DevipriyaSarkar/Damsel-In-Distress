@@ -49,7 +49,6 @@
         <activity
             android:name=".activities.RegisterActivity"
             android:label="@string/title_activity_register"
-            android:noHistory="true"
             android:theme="@style/AppTheme.NoActionBar.StatusBar" />
         <activity
             android:name=".activities.SettingsActivity"

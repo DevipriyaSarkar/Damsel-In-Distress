@@ -44,6 +44,8 @@
                 android:gravity="center"
                 android:hint="@string/verification_code"
                 android:inputType="phone"
+                android:textStyle="bold"
+                android:textSize="25sp"
                 android:maxLines="1" />
 
         </android.support.design.widget.TextInputLayout>
