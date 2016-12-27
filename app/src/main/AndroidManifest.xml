@@ -7,7 +7,6 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_CONTACTS" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.DISABLE_KEYGUARD" />
 
@@ -62,13 +61,16 @@
         </activity>
         <activity
             android:name=".activities.EmergencyContactsActivity"
-            android:label="@string/title_activity_emergency_contacts2"
+            android:label="@string/title_activity_emergency_contacts"
             android:parentActivityName=".activities.MainActivity"
             android:theme="@style/AppTheme.NoActionBar">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.teapink.damselindistress.activities.MainActivity" />
         </activity>
+        <activity
+            android:name=".activities.OTPVerificationActivity"
+            android:label="Verify Phone"/>
     </application>
 
 </manifest>

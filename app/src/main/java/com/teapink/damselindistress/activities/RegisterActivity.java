@@ -42,7 +42,6 @@ import java.util.Map;
 
 import static com.teapink.damselindistress.application.AppController.START_PHONE_VERIFICATION_URL;
 import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
-import static com.teapink.damselindistress.application.AppController.VERIFY_CODE_URL;
 
 /**
  * A login screen that offers login.
@@ -50,12 +49,13 @@ import static com.teapink.damselindistress.application.AppController.VERIFY_CODE
 public class RegisterActivity extends AppCompatActivity {
 
     private final String TAG = this.getClass().getSimpleName();
+    private final int REQUEST_VERIFICATION = 2000;
 
     // UI references.
     private EditText mNameView, mPhoneView, mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-    Dialog verifyPhoneDialog;
+    private String name, phone, password;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -104,9 +104,9 @@ public class RegisterActivity extends AppCompatActivity {
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String name = mNameView.getText().toString();
-        String phone = mPhoneView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        name = mNameView.getText().toString().trim();
+        phone = mPhoneView.getText().toString().trim();
+        password = mPasswordView.getText().toString().trim();
 
         boolean cancel = false;
         View focusView = null;
@@ -152,7 +152,7 @@ public class RegisterActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            verifyPhone(name, phone, password);
+            verifyPhone(phone);
         }
     }
 
@@ -166,10 +166,6 @@ public class RegisterActivity extends AppCompatActivity {
 
     private boolean isPasswordValid(String password) {
         return password.trim().length() > 0 || !password.equals("");
-    }
-
-    private boolean isCodeValid(String code) {
-        return code.trim().length() > 0 || !code.equals("");
     }
 
     /**
@@ -208,7 +204,7 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    void verifyPhone(final String userName, final String userPhone, final String userPassword) {
+    void verifyPhone(final String userPhone) {
 
         String urlString = START_PHONE_VERIFICATION_URL;
 
@@ -230,84 +226,14 @@ public class RegisterActivity extends AppCompatActivity {
                         try {
                             boolean success = response.getBoolean("success");
                             if (success) {
-                                verifyPhoneDialog = new Dialog(RegisterActivity.this);
-                                verifyPhoneDialog.setContentView(R.layout.verify_phone_dialog);
-                                verifyPhoneDialog.setTitle("Verify your mobile number");
-                                verifyPhoneDialog.show();
-
                                 showProgress(false);
-
-                                Button verifyBtn = (Button) verifyPhoneDialog.findViewById(R.id.verifyBtn);
-                                final EditText verCodeEditText = (EditText) verifyPhoneDialog.findViewById(R.id.verCodeEditText);
-
-                                verifyBtn.setOnClickListener(new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View view) {
-                                        String verCode = verCodeEditText.getText().toString().trim();
-                                        if (isCodeValid(verCode)) {
-                                            showProgress(true);
-                                            verifyOTP(userName, userPhone, userPassword, verCode);
-                                        } else {
-                                            Toast.makeText(getApplicationContext(), "Please enter valid OTP",
-                                                    Toast.LENGTH_SHORT).show();
-                                        }
-                                    }
-                                });
-
+                                Intent intent = new Intent(getApplicationContext(), OTPVerificationActivity.class);
+                                intent.putExtra("USER_PHONE", userPhone);
+                                startActivityForResult(intent, REQUEST_VERIFICATION);
                             } else {
                                 showProgress(false);
                                 mPhoneView.setError(getString(R.string.error_incorrect_credentials));
                                 mPhoneView.requestFocus();
-                            }
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                            Log.d(TAG, "JSON Error: " + e.getMessage());
-                            showProgress(false);
-                            Toast.makeText(getApplicationContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
-                        }
-
-                    }
-                }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.d(TAG, "Error in " + TAG + " : " + error.getMessage());
-                showProgress(false);
-                Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-        });
-
-        // Adding request to request queue
-        AppController.getInstance().addToRequestQueue(jsonObjReq);
-    }
-
-    void verifyOTP(final String userName, final String userPhone, final String userPassword, String verCode) {
-
-        String urlString = VERIFY_CODE_URL + "?api_key=" + TWILIO_API_KEY +
-                "&phone_number=" + userPhone +
-                "&country_code=" + "91" +
-                "&verification_code=" + verCode;
-
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,
-                urlString, null,
-                new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d(TAG, "Response: " + response.toString());
-
-                        try {
-                            boolean success = response.getBoolean("success");
-                            if (success) {
-                                Toast.makeText(getApplicationContext(), "OTP Verified.",
-                                        Toast.LENGTH_SHORT).show();
-                                verifyPhoneDialog.cancel();
-                                registerUser(userName, userPhone, userPassword);
-                            } else {
-                                showProgress(false);
-                                Toast.makeText(getApplicationContext(), "Incorrect OTP. Try again.",
-                                        Toast.LENGTH_SHORT).show();
                             }
 
                         } catch (JSONException e) {
@@ -364,5 +290,20 @@ public class RegisterActivity extends AppCompatActivity {
         startActivity(intent);
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_VERIFICATION) {
+            if (resultCode == RESULT_OK) {
+                if (name != null && phone != null && password != null) {
+                    registerUser(name, phone, password);
+                }
+                Log.d(TAG, "OnActivityResult RESULT_OK");
+            } else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(getApplicationContext(),
+                        "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "OnActivityResult RESULT_CANCELED");
+            }
+        }
+    }
 }
 

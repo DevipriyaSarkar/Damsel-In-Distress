@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.WindowManager;
 
 import com.teapink.damselindistress.activities.MainActivity;
+import com.teapink.damselindistress.utilities.ShakeDetector;
 
 public class ShakeSensorService extends Service {
 

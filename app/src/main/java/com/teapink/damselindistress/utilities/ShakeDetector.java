@@ -1,4 +1,4 @@
-package com.teapink.damselindistress.services;
+package com.teapink.damselindistress.utilities;
 
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;

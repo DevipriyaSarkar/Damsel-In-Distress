@@ -54,6 +54,6 @@
     <string name="pref_summary_text_alert_on">Receive SMS alerts from other Damsels around you in danger</string>
     <string name="pref_summary_text_alert_off">Not receiving SMS alerts from other Damsels around you in danger.
         \nPlease consider switching this option on and helping those who need you.</string>
-    <string name="title_activity_emergency_contacts2">Emergency Contacts</string>
+    <string name="title_activity_emergency_contacts">Emergency Contacts</string>
     <string name="title_activity_main2">Main2Activity</string>
 </resources>

@@ -12,7 +12,7 @@
         android:singleLine="true"
         android:title="@string/pref_title_display_name" />
 
-    <EditTextPreference
+    <Preference
         android:defaultValue="@string/pref_default_phone_number"
         android:inputType="phone"
         android:key="prefPhone"

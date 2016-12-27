@@ -1,7 +1,10 @@
 package com.teapink.damselindistress.activities;
 
 import android.annotation.TargetApi;
+import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -14,21 +17,39 @@ import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 import android.support.v4.app.NavUtils;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.MenuItem;
+import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.application.AppController;
 import com.teapink.damselindistress.models.Contact;
 import com.teapink.damselindistress.models.User;
 import com.teapink.damselindistress.utilities.AppCompatPreferenceActivity;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static com.teapink.damselindistress.application.AppController.START_PHONE_VERIFICATION_URL;
+import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
 
 /**
  * A {@link PreferenceActivity} that presents a set of application settings. On
@@ -38,8 +59,11 @@ import java.util.List;
  */
 public class SettingsActivity extends AppCompatPreferenceActivity {
 
+    private final String TAG = this.getClass().getSimpleName();
     private static User user = new User();
     private static ArrayList<Contact> contactArrayList;
+    private static final int REQUEST_VERIFICATION = 2000;
+    private static  ProgressDialog pDialog;
 
     /**
      * A preference value change listener that updates the user details and summary
@@ -63,11 +87,6 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                         updateAllDB(user);
                         break;
                     case "prefPhone":
-                        if (isPhoneInvalid(value.toString().trim())) {
-                            flag = 1;
-                            Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
-                            break;
-                        }
                         preference.setSummary(value.toString());
                         String oldPhone = user.getPhone();
                         user.setPhone(value.toString());
@@ -106,6 +125,45 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
             for (Contact contact : contactArrayList)
                 databaseRef.child("emergencyList").child(user.getPhone()).push().setValue(contact);
+        }
+    };
+
+    private static Preference.OnPreferenceClickListener phonePreferenceClickListener
+            = new Preference.OnPreferenceClickListener() {
+        @Override
+        public boolean onPreferenceClick(final Preference preference) {
+            if (preference.getKey().equals("prefPhone")) {
+                // ask for the new phone
+                AlertDialog.Builder alertDialog = new AlertDialog.Builder(preference.getContext());
+                alertDialog.setTitle("Phone Number");
+                final EditText phoneInputEditText = new EditText(preference.getContext());
+                LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.WRAP_CONTENT);
+                phoneInputEditText.setLayoutParams(lp);
+                alertDialog.setView(phoneInputEditText);
+
+                alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+                        String value = phoneInputEditText.getText().toString().trim();
+                        if (!isPhoneInvalid(value)) {
+                            verifyPhone(value, preference);
+                        } else {
+                            Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+
+                alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i) {
+
+                    }
+                });
+                alertDialog.show();
+                return false;
+            }
+            return false;
         }
     };
 
@@ -225,12 +283,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             addPreferencesFromResource(R.xml.pref_general);
             setHasOptionsMenu(true);
 
+            //initialize progress dialog
+            pDialog = new ProgressDialog(getActivity());
+            pDialog.setMessage("Verifying. Please wait.");
+            pDialog.setCancelable(false);
+
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
             // to their values. When their values change, their summaries are
             // updated to reflect the new value, per the Android Design
             // guidelines.
             bindPreference(findPreference("prefName"));
-            bindPreference(findPreference("prefPhone"));
+            findPreference("prefPhone").setOnPreferenceClickListener(phonePreferenceClickListener);
         }
 
         @Override
@@ -310,6 +373,20 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         super.onPause();
     }*/
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_VERIFICATION) {
+            if (resultCode == RESULT_OK) {
+                bindPreference(findPreference("prefPhone"));
+                Log.d(TAG, "OnActivityResult RESULT_OK");
+            } else if (resultCode == RESULT_CANCELED) {
+                Toast.makeText(getApplicationContext(),
+                        "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
+                Log.d(TAG, "OnActivityResult RESULT_CANCELED");
+            }
+        }
+    }
+
     private static boolean isNameInvalid(String name) {
         return name.matches(".*\\d+.*") || name.equals("");
     }
@@ -317,4 +394,73 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
     private static boolean isPhoneInvalid(String phone) {
         return phone.trim().length() < 10 || phone.equals("");
     }
+
+    static void verifyPhone(final String userPhone, final Preference preference) {
+
+        showPDialog();
+
+        String urlString = START_PHONE_VERIFICATION_URL;
+
+        Map<String, String> startParams = new HashMap<>();
+        startParams.put("api_key", TWILIO_API_KEY);
+        startParams.put("via", "sms");
+        startParams.put("phone_number", userPhone);
+        startParams.put("country_code", "91");
+        startParams.put("locale", "en");
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                urlString, new JSONObject(startParams),
+                new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("SettingsActivity", "Response: " + response.toString());
+
+                        try {
+                            boolean success = response.getBoolean("success");
+                            if (success) {
+                                hidePDialog();
+                                Intent intent = new Intent(preference.getContext(), OTPVerificationActivity.class);
+                                intent.putExtra("USER_PHONE", userPhone);
+                                preference.setIntent(intent);
+                                Activity activity = (Activity) preference.getContext();
+                                activity.startActivityForResult(intent, REQUEST_VERIFICATION);
+                            } else {
+                                hidePDialog();
+                                Toast.makeText(preference.getContext(), "Phone Number Incorrect.", Toast.LENGTH_SHORT).show();
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Log.d("SettingsActivity", "JSON Error: " + e.getMessage());
+                            hidePDialog();
+                            Toast.makeText(preference.getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("SettingsActivity", "Error in " + "SettingsActivity" + " : " + error.getMessage());
+                hidePDialog();
+                Toast.makeText(preference.getContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
+    }
+
+    private static void showPDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+
+    private static void hidePDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+    }
+
+
 }
