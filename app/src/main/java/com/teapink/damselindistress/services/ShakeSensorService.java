@@ -7,11 +7,13 @@ import android.hardware.Sensor;
 import android.hardware.SensorManager;
 import android.os.IBinder;
 import android.util.Log;
+import android.view.WindowManager;
 
 import com.teapink.damselindistress.activities.MainActivity;
 
 public class ShakeSensorService extends Service {
 
+    private final String TAG = this.getClass().getSimpleName();
     private SensorManager mSensorManager;
     private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
@@ -38,10 +40,14 @@ public class ShakeSensorService extends Service {
             @Override
             public void onShake(int count) {
                 if (count == 3) {
-                    Log.d("ShakeSensorService", "Shake Count:" + count);
+                    Log.d(TAG, "Shake Count:" + count);
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                    intent.putExtra("CALLED_FROM", "ShakeSensorService");
+                    intent.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED +
+                            WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD +
+                            WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON +
+                            WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON);
+                    intent.putExtra("CALLED_FROM", TAG);
                     startActivity(intent);
                 }
 

@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -37,6 +38,7 @@ public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     final String TAG = this.getClass().getSimpleName();
+    final String TAG_SENSOR = ShakeSensorService.class.getSimpleName();
     ToggleButton toggleButton;
     MediaPlayer mediaPlayer;
     AudioManager audioManager;
@@ -85,7 +87,7 @@ public class MainActivity extends AppCompatActivity
         if (bundle != null) {
             String calledFrom = bundle.getString("CALLED_FROM");
             if (calledFrom != null && calledFrom.equals("ShakeSensorService")) {
-                Log.d(TAG, "called from");
+                Log.d(TAG, "Called From " + TAG_SENSOR);
                 toggleButton.setChecked(true);
             }
         }
@@ -133,11 +135,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        if (mediaPlayer != null) {
-            if (mediaPlayer.isPlaying())
-                mediaPlayer.stop();
-            mediaPlayer.release();
-        }
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawer(GravityCompat.START);
         } else {
@@ -224,4 +221,17 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
+    @Override
+    protected void onDestroy() {
+        if (mediaPlayer != null) {
+            toggleButton.setChecked(false);
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.reset();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
+        super.onDestroy();
+    }
 }
