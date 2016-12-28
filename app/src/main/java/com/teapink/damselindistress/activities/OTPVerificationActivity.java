@@ -35,12 +35,13 @@ import static com.teapink.damselindistress.application.AppController.VERIFY_CODE
 
 public class OTPVerificationActivity extends AppCompatActivity {
 
-    final String TAG = this.getClass().getSimpleName();
-    String userPhone, callingActivity;
-    View verificationFormView, progressView;
-    TextView invalidPhoneView;
-    EditText verCodeEditText;
-    Button verifyBtn;
+    private final String TAG = this.getClass().getSimpleName();
+    private String userPhone;
+    private String callingActivity;
+    private View verificationFormView;
+    private View progressView;
+    private TextView invalidPhoneView;
+    private EditText verCodeEditText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +51,7 @@ public class OTPVerificationActivity extends AppCompatActivity {
         verificationFormView = findViewById(R.id.verificationFormView);
         progressView = findViewById(R.id.loginProgress);
         invalidPhoneView = (TextView) findViewById(R.id.invalidPhoneView);
-        verifyBtn = (Button) findViewById(R.id.verifyBtn);
+        Button verifyBtn = (Button) findViewById(R.id.verifyBtn);
         verCodeEditText = (EditText) findViewById(R.id.verCodeEditText);
 
         Bundle bundle = getIntent().getExtras();
@@ -79,7 +80,7 @@ public class OTPVerificationActivity extends AppCompatActivity {
 
     }
 
-    void verifyOTP(String verCode) {
+    private void verifyOTP(String verCode) {
 
         showProgress(true);
 
@@ -99,7 +100,7 @@ public class OTPVerificationActivity extends AppCompatActivity {
                         try {
                             boolean success = response.getBoolean("success");
                             if (success) {
-                                Toast.makeText(getApplicationContext(), "OTP Verified.",
+                                Toast.makeText(getApplicationContext(), R.string.otp_verification_success_message,
                                         Toast.LENGTH_SHORT).show();
                                 if (callingActivity != null && callingActivity.equals("SettingsActivity")) {
                                     // update the settings preference
@@ -115,7 +116,7 @@ public class OTPVerificationActivity extends AppCompatActivity {
                                 finish();
                             } else {
                                 showProgress(false);
-                                Toast.makeText(getApplicationContext(), "Incorrect OTP. Try again.",
+                                Toast.makeText(getApplicationContext(), R.string.otp_verification_error_message,
                                         Toast.LENGTH_SHORT).show();
                             }
 

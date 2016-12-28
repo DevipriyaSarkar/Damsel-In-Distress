@@ -7,7 +7,7 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
@@ -37,11 +37,10 @@ import com.teapink.damselindistress.services.ShakeSensorService;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    final String TAG = this.getClass().getSimpleName();
-    final String TAG_SENSOR = ShakeSensorService.class.getSimpleName();
-    ToggleButton toggleButton;
-    MediaPlayer mediaPlayer;
-    AudioManager audioManager;
+    private final String TAG = this.getClass().getSimpleName();
+    private final String TAG_SENSOR = ShakeSensorService.class.getSimpleName();
+    private ToggleButton toggleButton;
+    private MediaPlayer mediaPlayer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,7 +66,7 @@ public class MainActivity extends AppCompatActivity
                 if (isChecked) {
                     // The toggle is enabled
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_off));
-                    Toast.makeText(getApplicationContext(), "Playing sound", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), R.string.sound_playing_message, Toast.LENGTH_SHORT).show();
                     setMediaVolumeMax();
                     mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.scream);
                     mediaPlayer.setLooping(true);
@@ -76,7 +75,7 @@ public class MainActivity extends AppCompatActivity
                 } else {
                     // The toggle is disabled
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_on));
-                    Toast.makeText(getApplicationContext(), "Stopped sound", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), R.string.sound_stopped_message, Toast.LENGTH_SHORT).show();
                     mediaPlayer.stop();
                     mediaPlayer.reset();
                 }
@@ -112,7 +111,7 @@ public class MainActivity extends AppCompatActivity
         try {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(phoneNo, null, message, null, null);
-            Toast.makeText(getApplicationContext(), "SMS sent.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
             //Intent intent = new Intent(Intent.ACTION_CALL);
 
             //intent.setData(Uri.parse("tel:" + phoneNo));
@@ -121,13 +120,13 @@ public class MainActivity extends AppCompatActivity
         }
 
         catch (Exception e) {
-            Toast.makeText(getApplicationContext(), "SMS failed, please try again.", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
 
     private void setMediaVolumeMax() {
-        audioManager = (AudioManager)getSystemService(Context.AUDIO_SERVICE);
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
         int maxVolume = audioManager.getStreamMaxVolume(3);
         audioManager.setStreamVolume(3, maxVolume, 1);
     }
@@ -142,7 +141,7 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
-    public void logOut() {
+    private void logOut() {
         SharedPreferences sp1 = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
         SharedPreferences sp2 = getSharedPreferences("FIRST_LAUNCH", MODE_PRIVATE);
 
@@ -154,7 +153,8 @@ public class MainActivity extends AppCompatActivity
             // un-subscribe from SMS alerts when the user logs out
             DatabaseReference databaseRef;
             databaseRef = FirebaseDatabase.getInstance().getReference();
-            databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());  // update the un-subscription online
+            // update the un-subscription online
+            databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
         }
 
         SharedPreferences.Editor editor1 = sp1.edit();
@@ -173,9 +173,8 @@ public class MainActivity extends AppCompatActivity
         startActivity(intent);
     }
 
-    @SuppressWarnings("StatementWithEmptyBody")
     @Override
-    public boolean onNavigationItemSelected(MenuItem item) {
+    public boolean onNavigationItemSelected(@NonNull MenuItem item) {
         // handle navigation view item clicks here.
         int id = item.getItemId();
 
@@ -213,7 +212,10 @@ public class MainActivity extends AppCompatActivity
             AlertDialog alertDialog = alertDialogBuilder.create();
             alertDialog.show();
             // make emails clickable
-            ((TextView) alertDialog.findViewById(android.R.id.message)).setMovementMethod(LinkMovementMethod.getInstance());
+            TextView dialogMessage = (TextView) alertDialog.findViewById(android.R.id.message);
+            if (dialogMessage != null) {
+                dialogMessage.setMovementMethod(LinkMovementMethod.getInstance());
+            }
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

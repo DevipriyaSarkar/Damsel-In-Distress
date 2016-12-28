@@ -9,4 +9,11 @@
     <dimen name="fab_margin">16dp</dimen>
     <dimen name="login_widget_margin">16dp</dimen>
     <dimen name="card_padding">5dp</dimen>
+    <dimen name="verification_button_padding">10dp</dimen>
+    <dimen name="verification_code_text_size">25sp</dimen>
+    <dimen name="text_view_padding">5dp</dimen>
+    <dimen name="panic_button_dimen">200dp</dimen>
+    <dimen name="panic_button_padding">16dp</dimen>
+    <dimen name="panic_button_text_size">20sp</dimen>
+    <dimen name="contact_text_size">18sp</dimen>
 </resources>

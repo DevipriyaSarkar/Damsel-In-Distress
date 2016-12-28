@@ -209,7 +209,7 @@ public class RegisterActivity extends AppCompatActivity {
         }
     }
 
-    void checkIfPhoneAvailable(final String phone) {
+    private void checkIfPhoneAvailable(final String phone) {
         showProgress(true);
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference().child("users");
@@ -227,7 +227,7 @@ public class RegisterActivity extends AppCompatActivity {
                 if (flag == 1) {
                     showProgress(false);
                     Log.d(TAG, "Phone number exists.");
-                    Toast.makeText(getApplicationContext(), "Phone number already registered.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getApplicationContext(), R.string.phone_exists_error, Toast.LENGTH_SHORT).show();
                 } else {
                     Log.d(TAG, "Phone number available.");
                     verifyPhone(phone);
@@ -241,7 +241,7 @@ public class RegisterActivity extends AppCompatActivity {
         });
     }
 
-    void verifyPhone(final String userPhone) {
+    private void verifyPhone(final String userPhone) {
 
         String urlString = START_PHONE_VERIFICATION_URL;
 
@@ -303,7 +303,7 @@ public class RegisterActivity extends AppCompatActivity {
         AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
 
-    void registerUser(String userName, String userPhone, String userPassword) {
+    private void registerUser(String userName, String userPhone, String userPassword) {
         // register user
         User user = new User(userPhone,
                 new User.Info(userName, userPassword),
@@ -345,7 +345,7 @@ public class RegisterActivity extends AppCompatActivity {
                 Log.d(TAG, "OnActivityResult RESULT_OK");
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(),
-                        "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
+                        R.string.phone_verification_cancelled, Toast.LENGTH_LONG).show();
                 Log.d(TAG, "OnActivityResult RESULT_CANCELED");
             }
         }

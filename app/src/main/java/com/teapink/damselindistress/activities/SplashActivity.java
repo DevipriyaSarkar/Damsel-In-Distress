@@ -12,7 +12,7 @@ import com.teapink.damselindistress.R;
 public class SplashActivity extends AppCompatActivity {
 
     private static final int WAIT_TIME = 2000;
-    private final String TAG = this.getClass().getSimpleName();
+    // private final String TAG = this.getClass().getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

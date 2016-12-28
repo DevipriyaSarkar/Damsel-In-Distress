@@ -5,26 +5,26 @@
         <item
             android:id="@+id/nav_contacts"
             android:icon="@drawable/contacts"
-            android:title="Emergency Contacts" />
+            android:title="@string/nav_text_contacts" />
         <item
             android:id="@+id/nav_settings"
             android:icon="@drawable/settings"
-            android:title="Settings" />
+            android:title="@string/nav_text_settings" />
         <item
             android:id="@+id/nav_log_out"
             android:icon="@drawable/logout"
-            android:title="Log Out" />
+            android:title="@string/nav_text_log_out" />
     </group>
 
     <group android:id="@+id/appAboutGroup">
         <item
             android:id="@+id/nav_invite"
             android:icon="@drawable/invite_friend"
-            android:title="Invite Friends" />
+            android:title="@string/nav_text_invite_friends" />
         <item
             android:id="@+id/nav_about"
             android:icon="@drawable/about"
-            android:title="About" />
+            android:title="@string/nav_text_about" />
     </group>
 
 </menu>

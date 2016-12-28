@@ -86,7 +86,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     case "prefName":
                         if (isNameInvalid(value.toString().trim())) {
                             flag = 1;
-                            Toast.makeText(preference.getContext(), "Entered user name not valid.", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(preference.getContext(), R.string.invalid_name_error, Toast.LENGTH_SHORT).show();
                             break;
                         }
                         preference.setSummary(value.toString());
@@ -120,7 +120,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             if (preference.getKey().equals("prefPhone")) {
                 // ask for the new phone
                 AlertDialog.Builder alertDialog = new AlertDialog.Builder(preference.getContext());
-                alertDialog.setTitle("Phone Number");
+                alertDialog.setTitle(R.string.phone_number_dialog_title);
                 final EditText phoneInputEditText = new EditText(preference.getContext());
                 phoneInputEditText.setInputType(InputType.TYPE_CLASS_PHONE);
                 LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
@@ -130,22 +130,24 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 phoneInputEditText.setSelectAllOnFocus(true);
                 alertDialog.setView(phoneInputEditText);
 
-                alertDialog.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                alertDialog.setPositiveButton(R.string.change_phone_positive_button_text,
+                        new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String value = phoneInputEditText.getText().toString().trim();
                         value = value.replaceAll("\\s", "");    // remove all spaces
                         if (!value.equals(user.getPhone())) {   // if phone number changed
-                            if (!isPhoneInvalid(value)) {
+                            if (isPhoneValid(value)) {
                                 checkIfPhoneAvailable(value, preference);
                             } else {
-                                Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(preference.getContext(), R.string.invalid_phone_error, Toast.LENGTH_SHORT).show();
                             }
                         }
                     }
                 });
 
-                alertDialog.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                alertDialog.setNegativeButton(R.string.change_phone_negative_button_text,
+                        new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialogInterface, int i) {
 
@@ -277,7 +279,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
 
             //initialize progress dialog
             pDialog = new ProgressDialog(getActivity());
-            pDialog.setMessage("Verifying. Please wait.");
+            pDialog.setMessage(getString(R.string.verification_progress_dialog_message));
             pDialog.setCancelable(false);
 
             // Bind the summaries of EditText/List/Dialog/Ringtone preferences
@@ -377,7 +379,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 updateFirebaseDB(oldPhone, user);
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(),
-                        "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
+                        R.string.phone_verification_cancelled, Toast.LENGTH_LONG).show();
                 Log.d(TAG, "OnActivityResult RESULT_CANCELED");
             }
         }
@@ -387,11 +389,11 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         return name.matches(".*\\d+.*") || name.equals("");
     }
 
-    private static boolean isPhoneInvalid(String phone) {
-        return phone.trim().length() < 10 || phone.equals("");
+    private static boolean isPhoneValid(String phone) {
+        return phone.trim().length() >= 10 && !phone.equals("");
     }
 
-    static void verifyPhone(final String userPhone, final Preference preference) {
+    private static void verifyPhone(final String userPhone, final Preference preference) {
 
         showPDialog();
 
@@ -425,7 +427,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                                 activity.startActivityForResult(intent, REQUEST_VERIFICATION);
                             } else {
                                 hidePDialog();
-                                Toast.makeText(preference.getContext(), "Phone Number Incorrect.", Toast.LENGTH_SHORT).show();
+                                Toast.makeText(preference.getContext(), R.string.phone_incorrect_error, Toast.LENGTH_SHORT).show();
                             }
 
                         } catch (JSONException e) {
@@ -509,7 +511,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 if (flag == 1) {
                     hidePDialog();
                     Log.d("SettingsActivity", "Phone number exists.");
-                    Toast.makeText(preference.getContext(), "Phone number already registered.", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(preference.getContext(), R.string.phone_exists_error, Toast.LENGTH_SHORT).show();
                 } else {
                     hidePDialog();
                     Log.d("SettingsActivity", "Phone number available.");

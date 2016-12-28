@@ -54,6 +54,35 @@
     <string name="pref_summary_text_alert_on">Receive SMS alerts from other Damsels around you in danger</string>
     <string name="pref_summary_text_alert_off">Not receiving SMS alerts from other Damsels around you in danger.
         \nPlease consider switching this option on and helping those who need you.</string>
+
     <string name="title_activity_emergency_contacts">Emergency Contacts</string>
-    <string name="title_activity_main2">Main2Activity</string>
+    <string name="nav_text_contacts">Emergency Contacts</string>
+    <string name="nav_text_settings">Settings</string>
+    <string name="nav_text_log_out">Log Out</string>
+    <string name="nav_text_invite_friends">Invite Friends</string>
+    <string name="nav_text_about">About</string>
+    <string name="request_otp_verification">Please enter the OTP you just received and verify your mobile number to proceed.</string>
+    <string name="phone_verification_error_text">Phone cannot be verified.</string>
+    <string name="remove_contact_dialog_message">Are you sure you want to remove this contact from your emergency contact list?</string>
+    <string name="remove_contact_dialog_title">Remove Contact</string>
+    <string name="remove_contact_dialog_positive_button_text">Yes</string>
+    <string name="remove_contact_dialog_negative_button_text">No</string>
+    <string name="emergency_contact_max_limit_error">Maximum number of emergency contacts is 5.</string>
+    <string name="emergency_contact_exists_error">Selected contact already exists in your list.</string>
+    <string name="emergency_contact_fetch_error">Sorry. Could not get phone data.</string>
+    <string name="sound_playing_message">Playing sound</string>
+    <string name="sound_stopped_message">Stopped sound</string>
+    <string name="sms_sent_message">SMS sent.</string>
+    <string name="sms_failed_message">SMS failed, please try again.</string>
+    <string name="otp_verification_success_message">OTP Verified.</string>
+    <string name="otp_verification_error_message">Incorrect OTP. Try again.</string>
+    <string name="phone_exists_error">Phone number already registered.</string>
+    <string name="phone_verification_cancelled">Phone number not verified. Please verify phone number to proceed.</string>
+    <string name="invalid_name_error">Entered user name not valid.</string>
+    <string name="phone_number_dialog_title">Phone Number</string>
+    <string name="invalid_phone_error">Entered user phone not valid.</string>
+    <string name="change_phone_positive_button_text">OK</string>
+    <string name="change_phone_negative_button_text">Cancel</string>
+    <string name="verification_progress_dialog_message">Verifying. Please wait.</string>
+    <string name="phone_incorrect_error">Phone Number Incorrect.</string>
 </resources>

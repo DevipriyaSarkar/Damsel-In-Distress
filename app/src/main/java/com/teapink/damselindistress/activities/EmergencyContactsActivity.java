@@ -33,13 +33,12 @@ import java.util.ArrayList;
 
 public class EmergencyContactsActivity extends AppCompatActivity {
 
-    final String TAG = this.getClass().getSimpleName();
-    static final int CONTACT_PICKER_RESULT = 1001;
-    User user;
-    RecyclerView emergencyContactsList;
-    ContactListAdapter contactListAdapter;
-    ArrayList<Contact> contactArrayList;
-    SharedPreferences sp;
+    private final String TAG = this.getClass().getSimpleName();
+    private static final int CONTACT_PICKER_RESULT = 1001;
+    private User user;
+    private ContactListAdapter contactListAdapter;
+    private ArrayList<Contact> contactArrayList;
+    private SharedPreferences sp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,7 +49,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
 
         user = new User();
         contactArrayList = new ArrayList<>();
-        emergencyContactsList = (RecyclerView) findViewById(R.id.emergencyContactsList);
+        RecyclerView emergencyContactsList = (RecyclerView) findViewById(R.id.emergencyContactsList);
 
         // retrieve user information
         sp = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
@@ -79,9 +78,9 @@ public class EmergencyContactsActivity extends AppCompatActivity {
                     @Override
                     public void onItemClick(View view, final int position) {
                         AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(view.getContext());
-                        alertDialogBuilder.setTitle("Remove Contact");
-                        alertDialogBuilder.setMessage("Are you sure you want to remove this contact from your emergency contact list?");
-                        alertDialogBuilder.setPositiveButton("Yes",
+                        alertDialogBuilder.setTitle(R.string.remove_contact_dialog_title);
+                        alertDialogBuilder.setMessage(R.string.remove_contact_dialog_message);
+                        alertDialogBuilder.setPositiveButton(R.string.remove_contact_dialog_positive_button_text,
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -89,7 +88,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
                                         contactListAdapter.notifyDataSetChanged();
                                     }
                                 });
-                        alertDialogBuilder.setNegativeButton("No",
+                        alertDialogBuilder.setNegativeButton(R.string.remove_contact_dialog_negative_button_text,
                                 new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialogInterface, int i) {
@@ -108,14 +107,14 @@ public class EmergencyContactsActivity extends AppCompatActivity {
                 if (contactArrayList.size() < 5) {
                     doLaunchContactPicker(view);
                 } else {
-                    Snackbar.make(view, "Maximum number of emergency contacts is 5.", Snackbar.LENGTH_LONG).show();
+                    Snackbar.make(view, R.string.emergency_contact_max_limit_error, Snackbar.LENGTH_LONG).show();
                 }
             }
         });
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
-    public void doLaunchContactPicker(View view) {
+    private void doLaunchContactPicker(View view) {
         Intent contactPickerIntent = new Intent(Intent.ACTION_PICK,
                 ContactsContract.Contacts.CONTENT_URI);
         startActivityForResult(contactPickerIntent, CONTACT_PICKER_RESULT);
@@ -126,7 +125,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
             switch (requestCode) {
                 case CONTACT_PICKER_RESULT:
                     Cursor cursor = null;
-                    String phone = "", name = "";
+                    String phone, name;
                     try {
                         Uri result = data.getData();
                         // get the contact id from the Uri
@@ -149,7 +148,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
                                 for (Contact c : contactArrayList) {
                                     if (c.getPhone().equals(contact.getPhone())) {  // check if contact already exists in list
                                         Toast.makeText(getApplicationContext(),
-                                                "Selected contact already exists in your list.", Toast.LENGTH_SHORT).show();
+                                                R.string.emergency_contact_exists_error, Toast.LENGTH_SHORT).show();
                                         flag = 1;
                                         break;
                                     }
@@ -167,13 +166,13 @@ public class EmergencyContactsActivity extends AppCompatActivity {
                     } catch (Exception e) {
                         Log.d(TAG, "Failed to get phone data: " + e.getMessage());
                         Toast.makeText(getApplicationContext(),
-                                "Sorry. Could not get phone data.", Toast.LENGTH_SHORT).show();
+                                R.string.emergency_contact_fetch_error, Toast.LENGTH_SHORT).show();
                     } finally {
                         if (cursor != null) {
                             cursor.close();
                         } else {
                             Toast.makeText(getApplicationContext(),
-                                    "Sorry. Could not get phone data.", Toast.LENGTH_SHORT).show();
+                                    R.string.emergency_contact_fetch_error, Toast.LENGTH_SHORT).show();
                         }
                     }
                     break;
@@ -183,7 +182,7 @@ public class EmergencyContactsActivity extends AppCompatActivity {
         }
     }
 
-    public void addContactListToDB(ArrayList<Contact> contactArrayList) {
+    private void addContactListToDB(ArrayList<Contact> contactArrayList) {
         // Firebase DB
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference();

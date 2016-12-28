@@ -26,9 +26,9 @@
         android:orientation="vertical">
 
         <TextView
-            android:text="Please enter the OTP you just received and verify your mobile number to proceed."
+            android:text="@string/request_otp_verification"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-            android:padding="5dp"
+            android:padding="@dimen/text_view_padding"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
@@ -40,12 +40,12 @@
                 android:id="@+id/verCodeEditText"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="5dp"
+                android:padding="@dimen/text_view_padding"
                 android:gravity="center"
                 android:hint="@string/verification_code"
                 android:inputType="phone"
                 android:textStyle="bold"
-                android:textSize="25sp"
+                android:textSize="@dimen/verification_code_text_size"
                 android:maxLines="1" />
 
         </android.support.design.widget.TextInputLayout>
@@ -55,7 +55,7 @@
             style="?android:textAppearanceSmall"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
+            android:layout_margin="@dimen/verification_button_padding"
             android:layout_gravity="center"
             android:text="@string/verify_btn_text"
             android:textStyle="bold"
@@ -66,9 +66,9 @@
 
     <TextView
         android:id="@+id/invalidPhoneView"
-        android:text="Phone cannot be verified."
+        android:text="@string/phone_verification_error_text"
         android:textAppearance="@style/TextAppearance.AppCompat.Medium"
-        android:padding="5dp"
+        android:padding="@dimen/text_view_padding"
         android:textAlignment="center"
         android:visibility="gone"
         android:layout_width="match_parent"

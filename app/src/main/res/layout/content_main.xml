@@ -13,14 +13,14 @@
     tools:showIn="@layout/app_bar_main">
 
     <ToggleButton
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="@dimen/panic_button_dimen"
+        android:layout_height="@dimen/panic_button_dimen"
         android:background="@drawable/circle_bg_on"
-        android:padding="16dp"
+        android:padding="@dimen/panic_button_padding"
         android:text="@string/panic_release"
         android:textColor="@android:color/white"
         android:textStyle="bold"
-        android:textSize="20sp"
+        android:textSize="@dimen/panic_button_text_size"
         android:id="@+id/panicBtn"
         android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"

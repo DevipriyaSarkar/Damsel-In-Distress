@@ -16,7 +16,6 @@ public class ShakeSensorService extends Service {
 
     private final String TAG = this.getClass().getSimpleName();
     private SensorManager mSensorManager;
-    private Sensor mAccelerometer;
     private ShakeDetector mShakeDetector;
 
     public ShakeSensorService() {
@@ -33,7 +32,7 @@ public class ShakeSensorService extends Service {
 
         // ShakeDetector initialization
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager
+        Sensor mAccelerometer = mSensorManager
                 .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
         mShakeDetector = new ShakeDetector();
         mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {

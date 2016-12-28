@@ -9,10 +9,10 @@ import com.android.volley.toolbox.Volley;
 
 public class AppController extends Application {
 
-    public static final String TAG = AppController.class.getSimpleName();
+    private static final String TAG = AppController.class.getSimpleName();
     public static final String START_PHONE_VERIFICATION_URL = "https://api.authy.com/protected/json/phones/verification/start";
     public static final String VERIFY_CODE_URL = "https://api.authy.com/protected/json/phones/verification/check";
-    public static final String TWILIO_API_KEY = "<YOUR_TWILIO_API_KEY>";
+    public static final String TWILIO_API_KEY = "d0uGK0EGx7d4A7hILJuuB3Cvgvq3Q1yb";
     public static final int SOCKET_TIMEOUT_MS = 5000;
 
     private RequestQueue mRequestQueue;
@@ -29,7 +29,7 @@ public class AppController extends Application {
         return mInstance;
     }
 
-    public RequestQueue getRequestQueue() {
+    private RequestQueue getRequestQueue() {
         if (mRequestQueue == null) {
             mRequestQueue = Volley.newRequestQueue(getApplicationContext());
         }

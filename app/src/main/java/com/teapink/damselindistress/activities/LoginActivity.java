@@ -193,7 +193,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    void validateUser(final String userPhone, final String userPassword) {
+    private void validateUser(final String userPhone, final String userPassword) {
         // validate user
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference().child("users").child(userPhone);
@@ -231,6 +231,7 @@ public class LoginActivity extends AppCompatActivity {
                         getEmergencyContacts(userPhone);    // retrieve all emergency contacts
                     }
 
+                    showProgress(false);
                     finish();
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     startActivity(intent);
@@ -244,7 +245,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    void getEmergencyContacts(String userPhone) {
+    private void getEmergencyContacts(String userPhone) {
         final ArrayList<Contact> emergencyContactList = new ArrayList<>();
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference().child("emergencyList").child(userPhone);
