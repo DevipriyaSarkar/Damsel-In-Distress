@@ -3,7 +3,6 @@ package com.teapink.damselindistress.activities;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -22,14 +21,18 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.teapink.damselindistress.R;
 import com.teapink.damselindistress.application.AppController;
@@ -41,6 +44,7 @@ import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 
+import static com.teapink.damselindistress.application.AppController.SOCKET_TIMEOUT_MS;
 import static com.teapink.damselindistress.application.AppController.START_PHONE_VERIFICATION_URL;
 import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
 
@@ -153,8 +157,7 @@ public class RegisterActivity extends AppCompatActivity {
         } else {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
-            showProgress(true);
-            verifyPhone(phone);
+            checkIfPhoneAvailable(phone);
         }
     }
 
@@ -204,6 +207,38 @@ public class RegisterActivity extends AppCompatActivity {
             mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
             mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
         }
+    }
+
+    void checkIfPhoneAvailable(final String phone) {
+        showProgress(true);
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference().child("users");
+        databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                int flag = 0;
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    String p = postSnapshot.getKey();
+                    if (p.equals(phone)){
+                        flag = 1;
+                        break;
+                    }
+                }
+                if (flag == 1) {
+                    showProgress(false);
+                    Log.d(TAG, "Phone number exists.");
+                    Toast.makeText(getApplicationContext(), "Phone number already registered.", Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.d(TAG, "Phone number available.");
+                    verifyPhone(phone);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+            }
+        });
     }
 
     void verifyPhone(final String userPhone) {
@@ -257,6 +292,12 @@ public class RegisterActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+
+        //Set a retry policy in case of SocketTimeout & ConnectionTimeout Exceptions.
+        //Volley does retry for you if you have specified the policy.
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(SOCKET_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         // Adding request to request queue
         AppController.getInstance().addToRequestQueue(jsonObjReq);

@@ -16,6 +16,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.TimeoutError;
@@ -28,6 +29,7 @@ import com.teapink.damselindistress.application.AppController;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import static com.teapink.damselindistress.application.AppController.SOCKET_TIMEOUT_MS;
 import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
 import static com.teapink.damselindistress.application.AppController.VERIFY_CODE_URL;
 
@@ -99,7 +101,8 @@ public class OTPVerificationActivity extends AppCompatActivity {
                             if (success) {
                                 Toast.makeText(getApplicationContext(), "OTP Verified.",
                                         Toast.LENGTH_SHORT).show();
-                                if (callingActivity.equals("SettingsActivity")) {    // update the preference
+                                if (callingActivity != null && callingActivity.equals("SettingsActivity")) {
+                                    // update the settings preference
                                     SharedPreferences settingsPref = PreferenceManager
                                             .getDefaultSharedPreferences(getApplicationContext());
                                     SharedPreferences.Editor settingsEditor = settingsPref.edit();
@@ -135,6 +138,12 @@ public class OTPVerificationActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), error.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+
+        //Set a retry policy in case of SocketTimeout & ConnectionTimeout Exceptions.
+        //Volley does retry for you if you have specified the policy.
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(SOCKET_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
 
         // Adding request to request queue
         AppController.getInstance().addToRequestQueue(jsonObjReq);

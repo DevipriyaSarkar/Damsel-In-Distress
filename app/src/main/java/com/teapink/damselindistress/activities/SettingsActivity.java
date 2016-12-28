@@ -25,14 +25,18 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
+import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.teapink.damselindistress.R;
@@ -50,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static com.teapink.damselindistress.application.AppController.SOCKET_TIMEOUT_MS;
 import static com.teapink.damselindistress.application.AppController.START_PHONE_VERIFICATION_URL;
 import static com.teapink.damselindistress.application.AppController.TWILIO_API_KEY;
 
@@ -86,17 +91,17 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                         }
                         preference.setSummary(value.toString());
                         user.getInfo().setName(value.toString());
-                        updateAllDB(user);
+                        updateFirebaseDB(user);
                         break;
                     case "prefPhone":
                         preference.setSummary(value.toString());
                         String oldPhone = user.getPhone();
                         user.setPhone(value.toString());
-                        updateAllDB(oldPhone, user);
+                        updateFirebaseDB(oldPhone, user);
                         break;
                     case "prefAlert":
                         user.getLocation().setAlertAllowed(Boolean.valueOf(value.toString()));
-                        updateAllDB(user);
+                        updateFirebaseDB(user);
                         break;
                     default:
                         break;
@@ -130,10 +135,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                     public void onClick(DialogInterface dialogInterface, int i) {
                         String value = phoneInputEditText.getText().toString().trim();
                         value = value.replaceAll("\\s", "");    // remove all spaces
-                        if (!isPhoneInvalid(value)) {
-                            verifyPhone(value, preference);
-                        } else {
-                            Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
+                        if (!value.equals(user.getPhone())) {   // if phone number changed
+                            if (!isPhoneInvalid(value)) {
+                                checkIfPhoneAvailable(value, preference);
+                            } else {
+                                Toast.makeText(preference.getContext(), "Entered user phone not valid.", Toast.LENGTH_SHORT).show();
+                            }
                         }
                     }
                 });
@@ -197,6 +204,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             user = gson.fromJson(currentUser, User.class);
         }
         String jsonArrayList = sp.getString("contact_list", null);
+        contactArrayList = new ArrayList<>();
         if (jsonArrayList != null) {
             Gson gson = new Gson();
             Type type = new TypeToken<ArrayList<Contact>>() {}.getType();
@@ -366,7 +374,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
                 String newPhone = data.getExtras().getString("NEW_PHONE");
                 String oldPhone = user.getPhone();
                 user.setPhone(newPhone);
-                updateAllDB(oldPhone, user);
+                updateFirebaseDB(oldPhone, user);
             } else if (resultCode == RESULT_CANCELED) {
                 Toast.makeText(getApplicationContext(),
                         "Phone number not verified. Please verify phone number to proceed.", Toast.LENGTH_LONG).show();
@@ -440,6 +448,12 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             }
         });
 
+        //Set a retry policy in case of SocketTimeout & ConnectionTimeout Exceptions.
+        //Volley does retry for you if you have specified the policy.
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(SOCKET_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
         // Adding request to request queue
         AppController.getInstance().addToRequestQueue(jsonObjReq);
     }
@@ -454,7 +468,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
             pDialog.dismiss();
     }
 
-    private static void updateAllDB(User user) {
+    private static void updateFirebaseDB(User user) {
         // update Firebase DB Online
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -462,7 +476,7 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
     }
 
-    private static void updateAllDB(String oldPhone, User user) {
+    private static void updateFirebaseDB(String oldPhone, User user) {
         // update Firebase DB Online
         DatabaseReference databaseRef;
         databaseRef = FirebaseDatabase.getInstance().getReference();
@@ -475,6 +489,39 @@ public class SettingsActivity extends AppCompatPreferenceActivity {
         databaseRef.child("location").child(user.getPhone()).setValue(user.getLocation());
         for (Contact contact : contactArrayList)
             databaseRef.child("emergencyList").child(user.getPhone()).push().setValue(contact);
+    }
+
+    private static void checkIfPhoneAvailable(final String phone, final Preference preference) {
+        showPDialog();
+        DatabaseReference databaseRef;
+        databaseRef = FirebaseDatabase.getInstance().getReference().child("users");
+        databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                int flag = 0;
+                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                    String p = postSnapshot.getKey();
+                    if (p.equals(phone)){
+                        flag = 1;
+                        break;
+                    }
+                }
+                if (flag == 1) {
+                    hidePDialog();
+                    Log.d("SettingsActivity", "Phone number exists.");
+                    Toast.makeText(preference.getContext(), "Phone number already registered.", Toast.LENGTH_SHORT).show();
+                } else {
+                    hidePDialog();
+                    Log.d("SettingsActivity", "Phone number available.");
+                    verifyPhone(phone, preference);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+                Log.d("SettingsActivity", "Firebase Error: " + databaseError.getMessage());
+            }
+        });
     }
 
 
