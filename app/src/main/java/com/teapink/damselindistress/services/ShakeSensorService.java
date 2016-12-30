@@ -28,6 +28,7 @@ public class ShakeSensorService extends Service {
 
     @Override
     public void onCreate() {
+        Log.d(TAG, "onCreate");
         super.onCreate();
 
         // ShakeDetector initialization
@@ -58,6 +59,7 @@ public class ShakeSensorService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "onDestroy");
         mSensorManager.unregisterListener(mShakeDetector);
         super.onDestroy();
     }

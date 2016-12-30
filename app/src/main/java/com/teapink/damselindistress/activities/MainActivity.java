@@ -7,6 +7,7 @@ import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
 import android.support.v4.content.ContextCompat;
@@ -32,6 +33,7 @@ import com.google.firebase.database.FirebaseDatabase;
 import com.google.gson.Gson;
 import com.teapink.damselindistress.R;
 import com.teapink.damselindistress.models.User;
+import com.teapink.damselindistress.services.LocationTrackerService;
 import com.teapink.damselindistress.services.ShakeSensorService;
 
 public class MainActivity extends AppCompatActivity
@@ -47,6 +49,7 @@ public class MainActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         startService(new Intent(getApplicationContext(), ShakeSensorService.class));
+        startService(new Intent(getApplicationContext(), LocationTrackerService.class));
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -92,7 +95,7 @@ public class MainActivity extends AppCompatActivity
         }
 
         // test shared pref contents
-/*        SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
+        SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
         String user = sp.getString("current_user", null);
         Log.d(TAG, "Current User: " + user);
 
@@ -100,7 +103,7 @@ public class MainActivity extends AppCompatActivity
         String prefName = sp.getString("prefName", null);
         String prefPhone = sp.getString("prefPhone", null);
         boolean prefAlert = sp.getBoolean("prefAlert", true);
-        Log.d(TAG, "Current Settings User: " + "Name: " + prefName + " Phone: " + prefPhone + " Alert: " + prefAlert);*/
+        Log.d(TAG, "Current Settings User: " + "Name: " + prefName + " Phone: " + prefPhone + " Alert: " + prefAlert);
     }
 
     private void sendSMSMessage() {
@@ -164,8 +167,9 @@ public class MainActivity extends AppCompatActivity
         editor2.clear();
         editor2.commit();
 
-        // un-register from the service
+        // un-register from the services
         stopService(new Intent(getApplicationContext(), ShakeSensorService.class));
+        stopService(new Intent(getApplicationContext(), LocationTrackerService.class));
 
         finish();
         Intent intent = new Intent(getApplicationContext(), SplashActivity.class);
