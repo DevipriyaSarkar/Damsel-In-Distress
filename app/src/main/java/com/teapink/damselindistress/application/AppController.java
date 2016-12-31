@@ -12,7 +12,8 @@ public class AppController extends Application {
     private static final String TAG = AppController.class.getSimpleName();
     public static final String START_PHONE_VERIFICATION_URL = "https://api.authy.com/protected/json/phones/verification/start";
     public static final String VERIFY_CODE_URL = "https://api.authy.com/protected/json/phones/verification/check";
-    public static final String TWILIO_API_KEY = "d0uGK0EGx7d4A7hILJuuB3Cvgvq3Q1yb";
+    public static final String TWILIO_API_KEY = "<YOUR_TWILIO_API_KEY>";
+    public static final String GOOGLE_MAPS_DISTANCE_MATRIX_API_KEY = "<YOUR_DISTANCE_MATRIX_API_KEY>";
     public static final int SOCKET_TIMEOUT_MS = 5000;
 
     private RequestQueue mRequestQueue;

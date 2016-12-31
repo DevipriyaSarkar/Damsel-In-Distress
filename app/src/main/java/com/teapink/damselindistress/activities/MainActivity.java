@@ -1,11 +1,13 @@
 package com.teapink.damselindistress.activities;
 
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
@@ -28,21 +30,46 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.Request;
+import com.android.volley.Response;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.teapink.damselindistress.R;
+import com.teapink.damselindistress.application.AppController;
+import com.teapink.damselindistress.models.Contact;
 import com.teapink.damselindistress.models.User;
 import com.teapink.damselindistress.services.LocationTrackerService;
 import com.teapink.damselindistress.services.ShakeSensorService;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+
+import static com.teapink.damselindistress.application.AppController.GOOGLE_MAPS_DISTANCE_MATRIX_API_KEY;
+import static com.teapink.damselindistress.application.AppController.SOCKET_TIMEOUT_MS;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
     private final String TAG = this.getClass().getSimpleName();
     private final String TAG_SENSOR = ShakeSensorService.class.getSimpleName();
+    private static final double RADIUS_OF_EARTH = 6371e3; // metres
+    private static final double NEARBY_DISTANCE = 2000; // metres
     private ToggleButton toggleButton;
     private MediaPlayer mediaPlayer;
+    private ProgressDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,7 +101,7 @@ public class MainActivity extends AppCompatActivity
                     mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.scream);
                     mediaPlayer.setLooping(true);
                     mediaPlayer.start();
-                    sendSMSMessage();
+                    prepareDistressAlert();
                 } else {
                     // The toggle is disabled
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_on));
@@ -94,6 +121,11 @@ public class MainActivity extends AppCompatActivity
             }
         }
 
+        //initialize progress dialog
+        pDialog = new ProgressDialog(getApplicationContext());
+        pDialog.setMessage(getString(R.string.sending_alerts_progress_dialog_message));
+        pDialog.setCancelable(false);
+
         // test shared pref contents
         SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
         String user = sp.getString("current_user", null);
@@ -104,28 +136,6 @@ public class MainActivity extends AppCompatActivity
         String prefPhone = sp.getString("prefPhone", null);
         boolean prefAlert = sp.getBoolean("prefAlert", true);
         Log.d(TAG, "Current Settings User: " + "Name: " + prefName + " Phone: " + prefPhone + " Alert: " + prefAlert);
-    }
-
-    private void sendSMSMessage() {
-        Log.i("Send SMS", "");
-        String phoneNo = "9686970950";
-        String message = "Distress !! Panic on the senders side. Lat: 12.908341472, Long: 77.632927725";
-
-        try {
-            SmsManager smsManager = SmsManager.getDefault();
-            smsManager.sendTextMessage(phoneNo, null, message, null, null);
-            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
-            //Intent intent = new Intent(Intent.ACTION_CALL);
-
-            //intent.setData(Uri.parse("tel:" + phoneNo));
-            //          startActivity(intent);
-            //        Toast.makeText(getApplicationContext(), "Calling", Toast.LENGTH_LONG).show();
-        }
-
-        catch (Exception e) {
-            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
-            e.printStackTrace();
-        }
     }
 
     private void setMediaVolumeMax() {
@@ -240,4 +250,263 @@ public class MainActivity extends AppCompatActivity
         }
         super.onDestroy();
     }
+
+    private void showPDialog() {
+        if (!pDialog.isShowing())
+            pDialog.show();
+    }
+
+    private void hidePDialog() {
+        if (pDialog.isShowing())
+            pDialog.dismiss();
+    }
+
+    //check for internet connectivity
+    private boolean isInternetAvailable() {
+        ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        return cm.getActiveNetworkInfo() != null &&
+                cm.getActiveNetworkInfo().isConnectedOrConnecting();
+    }
+
+
+    private void prepareDistressAlert() {
+        final User user;
+        SharedPreferences sp = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
+        String currentUser = sp.getString("current_user", null);
+        if (currentUser != null) {
+            Gson gson = new Gson();
+            user = gson.fromJson(currentUser, User.class);  // get user's location
+            final boolean internetAvailable = isInternetAvailable();
+
+            // send distress alerts to all emergency contacts
+            ArrayList<Contact> emergencyContactList;
+            gson = new Gson();
+            String jsonArrayList = sp.getString("contact_list", null);
+            Type type = new TypeToken<ArrayList<Contact>>() {
+            }.getType();
+            if (jsonArrayList != null) {
+                emergencyContactList = gson.fromJson(jsonArrayList, type);
+                for (Contact contact : emergencyContactList) {
+                    sendSMS(user, contact);
+                }
+            }
+
+            // send distress alerts to nearby users of the app
+            showPDialog();
+            final DatabaseReference dbLocationRef;
+            dbLocationRef = FirebaseDatabase.getInstance().getReference().child("location");
+            dbLocationRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        User.Location location = postSnapshot.getValue(User.Location.class);
+                        if (location.hasAlertAllowed() && location.getLatitude() != null
+                                && location.getLongitude() != null) {
+                            // find nearby users and send them texts
+                            Contact helperContact = new Contact();
+                            helperContact.setPhone(postSnapshot.getKey());
+                            hidePDialog();
+                            if (internetAvailable) {
+                                findDistanceOnline(user, location, helperContact);
+                            }
+                        }
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    hidePDialog();
+                    Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+                }
+            });
+
+        }
+
+    }
+
+    private void findDistanceOnline(final User curUser, final User.Location location, final Contact helperContact) {
+        showPDialog();
+        // use google maps distance matrix API to calculate distance between two point
+        String lat1 = curUser.getLocation().getLatitude().trim();
+        String lon1 = curUser.getLocation().getLongitude().trim();
+        String lat2 = location.getLatitude().trim();
+        String lon2 = location.getLongitude().trim();
+
+        String urlString = "https://maps.googleapis.com/maps/api/distancematrix/json"
+                + "?units=metric&origins=" + lat1 + "," + lon1
+                + "&destinations=" + lat2 + "," + lon2
+                + "&language=en"
+                + "&key=" + GOOGLE_MAPS_DISTANCE_MATRIX_API_KEY;
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.GET,
+                urlString, null,
+                new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d(TAG, "Response: " + response.toString());
+                        int flag = 0;
+                        try {
+                            String status = response.getString("status");
+                            if (status.equals("OK")) {
+                                final double distance;
+                                hidePDialog();
+                                JSONObject element = response.getJSONArray("rows").getJSONObject(0)
+                                        .getJSONArray("elements").getJSONObject(0);
+                                if (element.getString("status").equals("OK")) {
+                                    // retrieve the distance
+                                    JSONObject distanceObj = element.getJSONObject("distance");
+                                    distance = distanceObj.getDouble("value");
+
+                                    // find helper's name and send message if he/she is nearby
+                                    if (distance <= NEARBY_DISTANCE) {
+                                        showPDialog();
+                                        final DatabaseReference dbUserRef;
+                                        dbUserRef = FirebaseDatabase.getInstance().getReference().child("users")
+                                                .child(helperContact.getPhone());
+                                        dbUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                                            @Override
+                                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                                                    User.Info info = postSnapshot.getValue(User.Info.class);
+                                                    helperContact.setName(info.getName());
+                                                    hidePDialog();
+                                                    sendSMS(curUser, helperContact, distance);
+                                                }
+                                            }
+
+                                            @Override
+                                            public void onCancelled(DatabaseError databaseError) {
+                                                Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+                                                hidePDialog();
+                                                helperContact.setName("");
+                                                sendSMS(curUser, helperContact, distance);
+                                            }
+                                        });
+                                    }
+                                } else {
+                                    flag = 1;
+                                }
+
+                            } else {
+                                flag = 1;
+                            }
+
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Log.d(TAG, "JSON Error: " + e.getMessage());
+                            flag =1;
+                        }
+
+                        if (flag == 1) {
+                            hidePDialog();
+                            findDistanceOffline(curUser, location, helperContact);
+                        }
+
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d(TAG, "Error in " + TAG + " : " + error.getMessage());
+                if (error instanceof TimeoutError)
+                    VolleyLog.d(TAG, "Error in " + TAG + " : " + "Timeout Error");
+                hidePDialog();
+                findDistanceOffline(curUser, location, helperContact);
+            }
+        });
+
+        //Set a retry policy in case of SocketTimeout & ConnectionTimeout Exceptions.
+        //Volley does retry for you if you have specified the policy.
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(SOCKET_TIMEOUT_MS,
+                DefaultRetryPolicy.DEFAULT_MAX_RETRIES,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+
+        // Adding request to request queue
+        AppController.getInstance().addToRequestQueue(jsonObjReq);
+
+    }
+
+    private void findDistanceOffline(final User curUser, User.Location location, final Contact helperContact) {
+        // use Haversine Formula to calculate distance between two point
+        User.Location curUserLocation = curUser.getLocation();
+        double lat1 = Math.toRadians(Double.valueOf(curUserLocation.getLatitude().trim()));
+        double lat2 = Math.toRadians(Double.valueOf(location.getLatitude().trim()));
+        double lon1 = Math.toRadians(Double.valueOf(curUserLocation.getLongitude().trim()));
+        double lon2 = Math.toRadians(Double.valueOf(location.getLongitude().trim()));
+        double deltaLat = Math.toRadians(lat2 - lat1);
+        double deltaLong = Math.toRadians(lon2 - lon1);
+
+        double a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+                Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLong / 2) * Math.sin(deltaLong / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        final double distance = RADIUS_OF_EARTH * c;
+
+        if (distance <= NEARBY_DISTANCE) {
+            showPDialog();
+            final DatabaseReference dbUserRef;
+            dbUserRef = FirebaseDatabase.getInstance().getReference().child("users").child(helperContact.getPhone());
+            dbUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot dataSnapshot) {
+                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                        User.Info info = postSnapshot.getValue(User.Info.class);
+                        helperContact.setName(info.getName());
+                        hidePDialog();
+                        sendSMS(curUser, helperContact, distance);
+                    }
+                }
+
+                @Override
+                public void onCancelled(DatabaseError databaseError) {
+                    Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+                    hidePDialog();
+                    helperContact.setName("");
+                    sendSMS(curUser, helperContact, distance);
+                }
+            });
+        }
+    }
+
+    private void sendSMS(User distressedUser, Contact helpingUser, double distance) {
+        // String distressedPhone = distressedUser.getPhone();
+        String distressedName = distressedUser.getInfo().getName();
+        String distressedLat = distressedUser.getLocation().getLatitude();
+        String distressedLon = distressedUser.getLocation().getLongitude();
+
+        String helperPhone = helpingUser.getPhone();
+        String helperName = helpingUser.getName();
+        String distressMessage = String.format(getString(R.string.nearby_helper_distress_message_text),
+                helperName, distressedName, String.valueOf(distance), distressedLat, distressedLon);
+        try {
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(helperPhone, null, distressMessage, null, null);
+            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+    private void sendSMS(User distressedUser, Contact helpingContact) {
+        // String distressedPhone = distressedUser.getPhone();
+        String distressedName = distressedUser.getInfo().getName();
+        String distressedLat = distressedUser.getLocation().getLatitude();
+        String distressedLon = distressedUser.getLocation().getLongitude();
+
+        String helperPhone = helpingContact.getPhone();
+        String helperName = helpingContact.getName();
+        String distressMessage = String.format(getString(R.string.emergency_contact_distress_message_text),
+                helperName, distressedName, distressedLat, distressedLon);
+        try {
+            SmsManager smsManager = SmsManager.getDefault();
+            smsManager.sendTextMessage(helperPhone, null, distressMessage, null, null);
+            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
+        } catch (Exception e) {
+            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+        }
+    }
+
+
 }

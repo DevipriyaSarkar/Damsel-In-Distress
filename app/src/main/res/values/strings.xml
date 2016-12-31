@@ -85,4 +85,7 @@
     <string name="change_phone_negative_button_text">Cancel</string>
     <string name="verification_progress_dialog_message">Verifying. Please wait.</string>
     <string name="phone_incorrect_error">Phone Number Incorrect.</string>
+    <string name="nearby_helper_distress_message_text">Hey %s, %s is in danger and is %s metres around you. Her location is:\nLatitude: %s Longitude: %s\nPlease try and help her.</string>
+    <string name="emergency_contact_distress_message_text">Hey %s, %s is in danger. Her location is:\nLatitude: %s Longitude: %s\nShe has listed you as her emergency contact. Please try and help her.</string>
+    <string name="sending_alerts_progress_dialog_message">Sending Distress Alerts to People Nearby. Please wait.</string>
 </resources>
