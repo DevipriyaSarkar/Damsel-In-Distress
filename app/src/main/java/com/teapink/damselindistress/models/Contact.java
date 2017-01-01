@@ -1,6 +1,9 @@
 package com.teapink.damselindistress.models;
 
+import android.util.Log;
+
 public class Contact {
+    private static final String TAG = "Contact";
     public String name, phone;
 
     public Contact() {}
@@ -23,5 +26,10 @@ public class Contact {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public void display() {
+        Log.d(TAG, "Name: " + name);
+        Log.d(TAG, "Phone: " + phone);
     }
 }

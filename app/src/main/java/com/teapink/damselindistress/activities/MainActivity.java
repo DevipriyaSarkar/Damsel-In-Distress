@@ -54,6 +54,9 @@ import com.teapink.damselindistress.services.ShakeSensorService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
@@ -69,7 +72,6 @@ public class MainActivity extends AppCompatActivity
     private static final double NEARBY_DISTANCE = 2000; // metres
     private ToggleButton toggleButton;
     private MediaPlayer mediaPlayer;
-    private ProgressDialog pDialog;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,7 +100,7 @@ public class MainActivity extends AppCompatActivity
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_off));
                     Toast.makeText(getApplicationContext(), R.string.sound_playing_message, Toast.LENGTH_SHORT).show();
                     setMediaVolumeMax();
-                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.scream);
+                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.sample);
                     mediaPlayer.setLooping(true);
                     mediaPlayer.start();
                     prepareDistressAlert();
@@ -120,11 +122,6 @@ public class MainActivity extends AppCompatActivity
                 toggleButton.setChecked(true);
             }
         }
-
-        //initialize progress dialog
-        pDialog = new ProgressDialog(getApplicationContext());
-        pDialog.setMessage(getString(R.string.sending_alerts_progress_dialog_message));
-        pDialog.setCancelable(false);
 
         // test shared pref contents
         SharedPreferences sp = getSharedPreferences("LOGGED_USER", Context.MODE_PRIVATE);
@@ -157,6 +154,17 @@ public class MainActivity extends AppCompatActivity
     private void logOut() {
         SharedPreferences sp1 = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
         SharedPreferences sp2 = getSharedPreferences("FIRST_LAUNCH", MODE_PRIVATE);
+
+        // release media player
+        if (mediaPlayer != null) {
+            toggleButton.setChecked(false);
+            if (mediaPlayer.isPlaying()) {
+                mediaPlayer.stop();
+            }
+            mediaPlayer.reset();
+            mediaPlayer.release();
+            mediaPlayer = null;
+        }
 
         String currentUser = sp1.getString("current_user", null);
         if (currentUser != null) {
@@ -251,16 +259,6 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
     }
 
-    private void showPDialog() {
-        if (!pDialog.isShowing())
-            pDialog.show();
-    }
-
-    private void hidePDialog() {
-        if (pDialog.isShowing())
-            pDialog.dismiss();
-    }
-
     //check for internet connectivity
     private boolean isInternetAvailable() {
         ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -270,6 +268,7 @@ public class MainActivity extends AppCompatActivity
 
 
     private void prepareDistressAlert() {
+        Log.d(TAG, "prepareDistressAlert");
         final User user;
         SharedPreferences sp = getSharedPreferences("LOGGED_USER", MODE_PRIVATE);
         String currentUser = sp.getString("current_user", null);
@@ -277,6 +276,7 @@ public class MainActivity extends AppCompatActivity
             Gson gson = new Gson();
             user = gson.fromJson(currentUser, User.class);  // get user's location
             final boolean internetAvailable = isInternetAvailable();
+            Log.d(TAG, "Internet Available: " + internetAvailable);
 
             // send distress alerts to all emergency contacts
             ArrayList<Contact> emergencyContactList;
@@ -292,41 +292,51 @@ public class MainActivity extends AppCompatActivity
             }
 
             // send distress alerts to nearby users of the app
-            showPDialog();
-            final DatabaseReference dbLocationRef;
-            dbLocationRef = FirebaseDatabase.getInstance().getReference().child("location");
-            dbLocationRef.addListenerForSingleValueEvent(new ValueEventListener() {
-                @Override
-                public void onDataChange(DataSnapshot dataSnapshot) {
-                    for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                        User.Location location = postSnapshot.getValue(User.Location.class);
-                        if (location.hasAlertAllowed() && location.getLatitude() != null
-                                && location.getLongitude() != null) {
-                            // find nearby users and send them texts
-                            Contact helperContact = new Contact();
-                            helperContact.setPhone(postSnapshot.getKey());
-                            hidePDialog();
-                            if (internetAvailable) {
-                                findDistanceOnline(user, location, helperContact);
+            // only if current user's location is known
+            if (user.getLocation().getLatitude() != null && user.getLocation().getLongitude() != null) {
+                final DatabaseReference dbLocationRef;
+                dbLocationRef = FirebaseDatabase.getInstance().getReference().child("location");
+                dbLocationRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
+                            User.Location location = postSnapshot.getValue(User.Location.class);
+                            // do not consider locations with null values
+                            // do not consider user's own location
+                            if (location.hasAlertAllowed()
+                                    && !location.getLatitude().equals("null") && !location.getLongitude().equals("null")
+                                    && !postSnapshot.getKey().equals(user.getPhone())) {
+                                // find nearby users and send them texts
+                                Contact helperContact = new Contact();
+                                helperContact.setPhone(postSnapshot.getKey());
+                                if (internetAvailable) {
+                                    findDistanceOnline(user, location, helperContact);
+                                }
                             }
                         }
                     }
-                }
 
-                @Override
-                public void onCancelled(DatabaseError databaseError) {
-                    hidePDialog();
-                    Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
-                }
-            });
+                    @Override
+                    public void onCancelled(DatabaseError databaseError) {
+                        Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
+                    }
+                });
+            }
 
         }
 
     }
 
     private void findDistanceOnline(final User curUser, final User.Location location, final Contact helperContact) {
-        showPDialog();
         // use google maps distance matrix API to calculate distance between two point
+        Log.d(TAG, "findDistanceOnline");
+        Log.d(TAG, "Current User: ");
+        curUser.display();
+        Log.d(TAG, "Helper User: ");
+        helperContact.display();
+        Log.d(TAG, "Helper User Location: ");
+        location.display();
+
         String lat1 = curUser.getLocation().getLatitude().trim();
         String lon1 = curUser.getLocation().getLongitude().trim();
         String lat2 = location.getLatitude().trim();
@@ -350,7 +360,6 @@ public class MainActivity extends AppCompatActivity
                             String status = response.getString("status");
                             if (status.equals("OK")) {
                                 final double distance;
-                                hidePDialog();
                                 JSONObject element = response.getJSONArray("rows").getJSONObject(0)
                                         .getJSONArray("elements").getJSONObject(0);
                                 if (element.getString("status").equals("OK")) {
@@ -360,25 +369,21 @@ public class MainActivity extends AppCompatActivity
 
                                     // find helper's name and send message if he/she is nearby
                                     if (distance <= NEARBY_DISTANCE) {
-                                        showPDialog();
                                         final DatabaseReference dbUserRef;
                                         dbUserRef = FirebaseDatabase.getInstance().getReference().child("users")
                                                 .child(helperContact.getPhone());
                                         dbUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
                                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                                for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
-                                                    User.Info info = postSnapshot.getValue(User.Info.class);
-                                                    helperContact.setName(info.getName());
-                                                    hidePDialog();
-                                                    sendSMS(curUser, helperContact, distance);
-                                                }
+                                                Log.d(TAG, dataSnapshot.toString());
+                                                User.Info info = dataSnapshot.getValue(User.Info.class);
+                                                helperContact.setName(info.getName());
+                                                sendSMS(curUser, helperContact, distance);
                                             }
 
                                             @Override
                                             public void onCancelled(DatabaseError databaseError) {
                                                 Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
-                                                hidePDialog();
                                                 helperContact.setName("");
                                                 sendSMS(curUser, helperContact, distance);
                                             }
@@ -399,7 +404,6 @@ public class MainActivity extends AppCompatActivity
                         }
 
                         if (flag == 1) {
-                            hidePDialog();
                             findDistanceOffline(curUser, location, helperContact);
                         }
 
@@ -411,7 +415,6 @@ public class MainActivity extends AppCompatActivity
                 VolleyLog.d(TAG, "Error in " + TAG + " : " + error.getMessage());
                 if (error instanceof TimeoutError)
                     VolleyLog.d(TAG, "Error in " + TAG + " : " + "Timeout Error");
-                hidePDialog();
                 findDistanceOffline(curUser, location, helperContact);
             }
         });
@@ -429,6 +432,14 @@ public class MainActivity extends AppCompatActivity
 
     private void findDistanceOffline(final User curUser, User.Location location, final Contact helperContact) {
         // use Haversine Formula to calculate distance between two point
+        Log.d(TAG, "findDistanceOffline");
+        Log.d(TAG, "Current User: ");
+        curUser.display();
+        Log.d(TAG, "Helper User: ");
+        helperContact.display();
+        Log.d(TAG, "Helper User Location: ");
+        location.display();
+
         User.Location curUserLocation = curUser.getLocation();
         double lat1 = Math.toRadians(Double.valueOf(curUserLocation.getLatitude().trim()));
         double lat2 = Math.toRadians(Double.valueOf(location.getLatitude().trim()));
@@ -443,7 +454,6 @@ public class MainActivity extends AppCompatActivity
         final double distance = RADIUS_OF_EARTH * c;
 
         if (distance <= NEARBY_DISTANCE) {
-            showPDialog();
             final DatabaseReference dbUserRef;
             dbUserRef = FirebaseDatabase.getInstance().getReference().child("users").child(helperContact.getPhone());
             dbUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
@@ -452,7 +462,6 @@ public class MainActivity extends AppCompatActivity
                     for (DataSnapshot postSnapshot : dataSnapshot.getChildren()) {
                         User.Info info = postSnapshot.getValue(User.Info.class);
                         helperContact.setName(info.getName());
-                        hidePDialog();
                         sendSMS(curUser, helperContact, distance);
                     }
                 }
@@ -460,7 +469,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onCancelled(DatabaseError databaseError) {
                     Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
-                    hidePDialog();
                     helperContact.setName("");
                     sendSMS(curUser, helperContact, distance);
                 }
@@ -469,6 +477,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void sendSMS(User distressedUser, Contact helpingUser, double distance) {
+        Log.d(TAG, "App User Send SMS");
         // String distressedPhone = distressedUser.getPhone();
         String distressedName = distressedUser.getInfo().getName();
         String distressedLat = distressedUser.getLocation().getLatitude();
@@ -478,17 +487,23 @@ public class MainActivity extends AppCompatActivity
         String helperName = helpingUser.getName();
         String distressMessage = String.format(getString(R.string.nearby_helper_distress_message_text),
                 helperName, distressedName, String.valueOf(distance), distressedLat, distressedLon);
+        Log.d(TAG, "Distress Message: " + distressMessage);
         try {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(helperPhone, null, distressMessage, null, null);
-            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "SMS sent to " + helperName + " successfully.");
+            Toast.makeText(getApplicationContext(), String.format(getString(R.string.sms_sent_message), helperName),
+                    Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "SMS to " + helperName + " failed.");
+            Toast.makeText(getApplicationContext(), String.format(getString(R.string.sms_failed_message), helperName),
+                    Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }
 
     private void sendSMS(User distressedUser, Contact helpingContact) {
+        Log.d(TAG, "Emergency Contact Send SMS");
         // String distressedPhone = distressedUser.getPhone();
         String distressedName = distressedUser.getInfo().getName();
         String distressedLat = distressedUser.getLocation().getLatitude();
@@ -498,12 +513,17 @@ public class MainActivity extends AppCompatActivity
         String helperName = helpingContact.getName();
         String distressMessage = String.format(getString(R.string.emergency_contact_distress_message_text),
                 helperName, distressedName, distressedLat, distressedLon);
+        Log.d(TAG, "Distress Message: " + distressMessage);
         try {
             SmsManager smsManager = SmsManager.getDefault();
             smsManager.sendTextMessage(helperPhone, null, distressMessage, null, null);
-            Toast.makeText(getApplicationContext(), R.string.sms_sent_message, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "SMS sent to " + helperName + " successfully.");
+            Toast.makeText(getApplicationContext(), String.format(getString(R.string.sms_sent_message), helperName),
+                    Toast.LENGTH_LONG).show();
         } catch (Exception e) {
-            Toast.makeText(getApplicationContext(), R.string.sms_failed_message, Toast.LENGTH_LONG).show();
+            Log.d(TAG, "SMS to " + helperName + " failed.");
+            Toast.makeText(getApplicationContext(), String.format(getString(R.string.sms_failed_message), helperName),
+                    Toast.LENGTH_LONG).show();
             e.printStackTrace();
         }
     }

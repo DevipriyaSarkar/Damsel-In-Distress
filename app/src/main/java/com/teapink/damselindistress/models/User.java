@@ -1,8 +1,14 @@
 package com.teapink.damselindistress.models;
 
+import android.util.Log;
+
 public class User {
+    private static final String TAG = "User";
+    @SuppressWarnings("WeakerAccess")   // field cannot be private for Firebase to access
     public String phone;
+    @SuppressWarnings("WeakerAccess")
     public Info info;
+    @SuppressWarnings("WeakerAccess")
     public Location location;
 
     public User() {}
@@ -37,9 +43,18 @@ public class User {
         return location;
     }
 
+    public void display() {
+        Log.d(TAG, "Phone: " + phone);
+        info.display();
+        location.display();
+    }
+
 
     public static class Info {
+        private static final String TAG = "Info";
+        @SuppressWarnings("WeakerAccess")   // field cannot be private for Firebase to access
         public String name;
+        @SuppressWarnings("WeakerAccess")
         public String password;
 
         public Info() {}
@@ -63,11 +78,19 @@ public class User {
         public String getPassword() {
             return password;
         }
+
+        public void display() {
+            Log.d(TAG, "User Name: " + name);
+        }
     }
 
     public static class Location {
+        private static final String TAG = "Location";
+        @SuppressWarnings("WeakerAccess")   // field cannot be private for Firebase to access
         public String latitude;
+        @SuppressWarnings("WeakerAccess")
         public String longitude;
+        @SuppressWarnings("WeakerAccess")
         public boolean alertAllowed;   // user has agreed to receive SMS if someone nearby is in danger
 
         public Location() {
@@ -102,6 +125,12 @@ public class User {
 
         public boolean hasAlertAllowed() {
             return alertAllowed;
+        }
+
+        public void display() {
+            Log.d(TAG, "Latitude: " + latitude);
+            Log.d(TAG, "Longitude: " + longitude);
+            Log.d(TAG, "Alert Allowed: " + alertAllowed);
         }
     }
 

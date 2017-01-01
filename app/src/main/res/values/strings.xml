@@ -72,8 +72,6 @@
     <string name="emergency_contact_fetch_error">Sorry. Could not get phone data.</string>
     <string name="sound_playing_message">Playing sound</string>
     <string name="sound_stopped_message">Stopped sound</string>
-    <string name="sms_sent_message">SMS sent.</string>
-    <string name="sms_failed_message">SMS failed, please try again.</string>
     <string name="otp_verification_success_message">OTP Verified.</string>
     <string name="otp_verification_error_message">Incorrect OTP. Try again.</string>
     <string name="phone_exists_error">Phone number already registered.</string>
@@ -85,7 +83,9 @@
     <string name="change_phone_negative_button_text">Cancel</string>
     <string name="verification_progress_dialog_message">Verifying. Please wait.</string>
     <string name="phone_incorrect_error">Phone Number Incorrect.</string>
-    <string name="nearby_helper_distress_message_text">Hey %s, %s is in danger and is %s metres around you. Her location is:\nLatitude: %s Longitude: %s\nPlease try and help her.</string>
-    <string name="emergency_contact_distress_message_text">Hey %s, %s is in danger. Her location is:\nLatitude: %s Longitude: %s\nShe has listed you as her emergency contact. Please try and help her.</string>
+    <string name="nearby_helper_distress_message_text" formatted="false">Hey %s, %s is in danger and is %s metres around you. Her location is:\nLatitude: %s Longitude: %s\nPlease try and help her.</string>
+    <string name="emergency_contact_distress_message_text" formatted="false">Hey %s, %s is in danger. Her location is:\nLatitude: %s Longitude: %s\nShe has listed you as her emergency contact. Please try and help her.</string>
     <string name="sending_alerts_progress_dialog_message">Sending Distress Alerts to People Nearby. Please wait.</string>
+    <string name="sms_sent_message" formatted="false">SMS sent to %s</string>
+    <string name="sms_failed_message" formatted="false">SMS to %s failed</string>
 </resources>
