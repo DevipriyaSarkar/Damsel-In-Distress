@@ -96,7 +96,7 @@ public class MainActivity extends AppCompatActivity
                     toggleButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.circle_bg_off));
                     Toast.makeText(getApplicationContext(), R.string.sound_playing_message, Toast.LENGTH_SHORT).show();
                     setMediaVolumeMax();
-                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.sample);
+                    mediaPlayer = MediaPlayer.create(getApplicationContext(), R.raw.scream);
                     mediaPlayer.setLooping(true);
                     mediaPlayer.start();
                     prepareDistressAlert();
@@ -289,7 +289,7 @@ public class MainActivity extends AppCompatActivity
 
             // send distress alerts to nearby users of the app
             // only if current user's location is known
-            if (user.getLocation().getLatitude() != null && user.getLocation().getLongitude() != null) {
+            if (!user.getLocation().getLatitude().equals("null") && !user.getLocation().getLongitude().equals("null")) {
                 final DatabaseReference dbLocationRef;
                 dbLocationRef = FirebaseDatabase.getInstance().getReference().child("location");
                 dbLocationRef.addListenerForSingleValueEvent(new ValueEventListener() {

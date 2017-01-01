@@ -201,7 +201,7 @@ public class LoginActivity extends AppCompatActivity {
         databaseRef.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                User.Info info = dataSnapshot.getValue(User.Info.class);
+                final User.Info info = dataSnapshot.getValue(User.Info.class);
                 if (info.getPassword().equals(userPassword)) {
                     Log.d(TAG, "User Verified!");
 
@@ -215,36 +215,18 @@ public class LoginActivity extends AppCompatActivity {
                             @Override
                             public void onDataChange(DataSnapshot dataSnapshot) {
                                 location = dataSnapshot.getValue(User.Location.class);
+                                location.setAlertAllowed(true); // user is logging in to the app first time
+                                updateAllDB(userPhone, info, location);
                             }
 
                             @Override
                             public void onCancelled(DatabaseError databaseError) {
                                 location = new User.Location();
+                                location.setAlertAllowed(true); // user is logging in to the app first time
+                                updateAllDB(userPhone, info, location);
                             }
                         });
-                        location.setAlertAllowed(true); // user is logging in to the app first time
-                        User user = new User(userPhone, info, location);
-                        SharedPreferences.Editor editor = sharedPref.edit();
-                        Gson gson = new Gson();
-                        String json = gson.toJson(user);
-                        editor.putString("current_user", json);
-                        editor.apply();
 
-                        // initialise settings pref
-                        SharedPreferences settingsPref = PreferenceManager
-                                .getDefaultSharedPreferences(getApplicationContext());
-                        SharedPreferences.Editor settingsEditor = settingsPref.edit();
-                        settingsEditor.putString("prefName", user.getInfo().getName());
-                        settingsEditor.putString("prefPhone", user.getPhone());
-                        settingsEditor.putBoolean("prefAlert", user.getLocation().hasAlertAllowed());
-                        settingsEditor.apply();
-
-                        // new user - subscribe to SMS alerts
-                        // do not do if ALREADY_LOGGED_IN - they might have opted out of the alerts in settings
-                        dbRef = FirebaseDatabase.getInstance().getReference();
-                        dbRef.child("location").child(user.getPhone()).setValue(user.getLocation());
-
-                        getEmergencyContacts(userPhone);    // retrieve all emergency contacts
                     }
 
                     showProgress(false);
@@ -259,6 +241,34 @@ public class LoginActivity extends AppCompatActivity {
                 Log.d(TAG, "Firebase Error: " + databaseError.getMessage());
             }
         });
+    }
+
+    private void updateAllDB(String userPhone, User.Info info, User.Location location) {
+        // initialise shared pref
+        User user = new User(userPhone, info, location);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        Gson gson = new Gson();
+        String json = gson.toJson(user);
+        editor.putString("current_user", json);
+        editor.apply();
+
+        // initialise settings pref
+        SharedPreferences settingsPref = PreferenceManager
+                .getDefaultSharedPreferences(getApplicationContext());
+        SharedPreferences.Editor settingsEditor = settingsPref.edit();
+        settingsEditor.putString("prefName", user.getInfo().getName());
+        settingsEditor.putString("prefPhone", user.getPhone());
+        settingsEditor.putBoolean("prefAlert", user.getLocation().hasAlertAllowed());
+        settingsEditor.apply();
+
+        // update Firebase database
+        // new user - subscribe to SMS alerts
+        // do not do if ALREADY_LOGGED_IN - they might have opted out of the alerts in settings
+        DatabaseReference dbRef;
+        dbRef = FirebaseDatabase.getInstance().getReference();
+        dbRef.child("location").child(user.getPhone()).setValue(user.getLocation());
+
+        getEmergencyContacts(userPhone);    // retrieve all emergency contacts
     }
 
     private void getEmergencyContacts(String userPhone) {
