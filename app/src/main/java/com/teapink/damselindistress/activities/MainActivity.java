@@ -1,6 +1,5 @@
 package com.teapink.damselindistress.activities;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -54,9 +53,6 @@ import com.teapink.damselindistress.services.ShakeSensorService;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 
@@ -375,7 +371,6 @@ public class MainActivity extends AppCompatActivity
                                         dbUserRef.addListenerForSingleValueEvent(new ValueEventListener() {
                                             @Override
                                             public void onDataChange(DataSnapshot dataSnapshot) {
-                                                Log.d(TAG, dataSnapshot.toString());
                                                 User.Info info = dataSnapshot.getValue(User.Info.class);
                                                 helperContact.setName(info.getName());
                                                 sendSMS(curUser, helperContact, distance);

@@ -45,6 +45,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText mPhoneView, mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private User.Location location;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -206,7 +207,23 @@ public class LoginActivity extends AppCompatActivity {
 
                     if(!ALREADY_LOGGED_IN) {
                         // new user - save user details in shared pref
-                        User user = new User(userPhone, info, new User.Location());
+                        // get user location from Firebase
+                        DatabaseReference dbRef;
+                        dbRef = FirebaseDatabase.getInstance().getReference().child("location")
+                                .child(userPhone);
+                        dbRef.addListenerForSingleValueEvent(new ValueEventListener() {
+                            @Override
+                            public void onDataChange(DataSnapshot dataSnapshot) {
+                                location = dataSnapshot.getValue(User.Location.class);
+                            }
+
+                            @Override
+                            public void onCancelled(DatabaseError databaseError) {
+                                location = new User.Location();
+                            }
+                        });
+                        location.setAlertAllowed(true); // user is logging in to the app first time
+                        User user = new User(userPhone, info, location);
                         SharedPreferences.Editor editor = sharedPref.edit();
                         Gson gson = new Gson();
                         String json = gson.toJson(user);
@@ -224,7 +241,6 @@ public class LoginActivity extends AppCompatActivity {
 
                         // new user - subscribe to SMS alerts
                         // do not do if ALREADY_LOGGED_IN - they might have opted out of the alerts in settings
-                        DatabaseReference dbRef;
                         dbRef = FirebaseDatabase.getInstance().getReference();
                         dbRef.child("location").child(user.getPhone()).setValue(user.getLocation());
 
