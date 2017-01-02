@@ -5,11 +5,11 @@ An android app that focuses on women safety. It plays high frequency scream when
 Download app from [here](https://github.com/DevipriyaSarkar/Damsel-In-Distress/releases).
 
 ## Screenshots
-<img src="screenshots/screenshot1.png" width="360" alt="Splash Screen" >  
-<img src="screenshots/screenshot2.png" width="360" alt="Login Screen" >  
-<img src="screenshots/screenshot3.png" width="360" alt="Navigation Drawer" >  
-<img src="screenshots/screenshot4.png" width="360" alt="Main Panic Screen" >  
-<img src="screenshots/screenshot5.png" width="360" alt="Emergency Contact Screen" >  
+<img src="screenshots/screenshot1.png" width="360" alt="Splash Screen" >
+<img src="screenshots/screenshot2.png" width="360" alt="Login Screen" >
+<img src="screenshots/screenshot3.png" width="360" alt="Navigation Drawer" >
+<img src="screenshots/screenshot4.png" width="360" alt="Main Panic Screen" >
+<img src="screenshots/screenshot5.png" width="360" alt="Emergency Contact Screen" >
 
 ## Setup
 1. Clone/download the repository.
