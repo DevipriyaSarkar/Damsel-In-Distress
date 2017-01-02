@@ -2,7 +2,7 @@
     <string name="app_name">Damsel in Distress</string>
     <string name="panic_release">Panic Release</string>
     <string name="splash_logo_content_desc">Damsel In Distress Logo</string>
-    <string name="welcome_text">Welcome to Damsel In Distress</string>
+    <string name="welcome_text">Be safe with Damsel in Distress</string>
 
     <string name="navigation_drawer_open">Open navigation drawer</string>
     <string name="navigation_drawer_close">Close navigation drawer</string>

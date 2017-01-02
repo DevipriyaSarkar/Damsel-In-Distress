@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorPrimaryDark"
+    android:background="@android:color/white"
     android:paddingBottom="@dimen/activity_vertical_margin"
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
@@ -21,7 +21,8 @@
             android:layout_width="@dimen/splash_logo_dimen"
             android:layout_height="@dimen/splash_logo_dimen"
             android:layout_gravity="center"
-            android:src="@mipmap/ic_launcher"
+            android:src="@mipmap/ic_launcher_transparent"
+            android:background="@android:color/transparent"
             android:contentDescription="@string/splash_logo_content_desc" />
 
         <TextView
@@ -29,7 +30,8 @@
             android:textAppearance="?android:textAppearanceLarge"
             android:gravity="center"
             android:padding="@dimen/welcome_padding"
-            android:textColor="@android:color/white"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
