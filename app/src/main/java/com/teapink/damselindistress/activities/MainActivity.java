@@ -1,16 +1,21 @@
 package com.teapink.damselindistress.activities;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -55,6 +60,7 @@ import org.json.JSONObject;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.teapink.damselindistress.application.AppController.GOOGLE_MAPS_DISTANCE_MATRIX_API_KEY;
 import static com.teapink.damselindistress.application.AppController.SOCKET_TIMEOUT_MS;
@@ -64,6 +70,7 @@ public class MainActivity extends AppCompatActivity
 
     private final String TAG = this.getClass().getSimpleName();
     private final String TAG_SENSOR = ShakeSensorService.class.getSimpleName();
+    private static final int PERMISSION_ALL = 1;
     private static final double RADIUS_OF_EARTH = 6371e3; // metres
     private static final double NEARBY_DISTANCE = 2000; // metres
     private ToggleButton toggleButton;
@@ -86,6 +93,19 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // The request code used in ActivityCompat.requestPermissions()
+        // and returned in the Activity's onRequestPermissionsResult()
+        String[] PERMISSIONS = new String[0];
+        try {
+            PERMISSIONS = getPermissions(getApplicationContext());
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        if(!hasPermissions(this, PERMISSIONS)){
+            ActivityCompat.requestPermissions(this, PERMISSIONS, PERMISSION_ALL);
+        }
 
         toggleButton = (ToggleButton) findViewById(R.id.panicBtn);
 
@@ -129,6 +149,17 @@ public class MainActivity extends AppCompatActivity
         String prefPhone = sp.getString("prefPhone", null);
         boolean prefAlert = sp.getBoolean("prefAlert", true);
         Log.d(TAG, "Current Settings User: " + "Name: " + prefName + " Phone: " + prefPhone + " Alert: " + prefAlert);
+    }
+
+    public static boolean hasPermissions(Context context, String... permissions) {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && context != null && permissions != null) {
+            for (String permission : permissions) {
+                if (ActivityCompat.checkSelfPermission(context, permission) != PackageManager.PERMISSION_GRANTED) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     private void setMediaVolumeMax() {
@@ -523,5 +554,72 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        switch (requestCode) {
+            case PERMISSION_ALL: {
 
+                if (grantResults.length > 0) {
+
+                    List<Integer> indexesOfPermissionsNeededToShow = new ArrayList<>();
+                    ArrayList<String> permissionsRequired = new ArrayList<>();
+                    for(int i = 0; i < permissions.length; ++i) {
+                        if(ActivityCompat.shouldShowRequestPermissionRationale(this, permissions[i])) {
+                            indexesOfPermissionsNeededToShow.add(i);
+                        }
+                    }
+
+                    int size = indexesOfPermissionsNeededToShow.size();
+                    if(size != 0) {
+                        int i = 0;
+                        boolean isPermissionGranted = true;
+
+                        while(i < size && isPermissionGranted) {
+                            isPermissionGranted = grantResults[indexesOfPermissionsNeededToShow.get(i)]
+                                    == PackageManager.PERMISSION_GRANTED;
+                            i++;
+                        }
+
+                        if(!isPermissionGranted) {
+                            String title = "Permissions mandatory";
+                            String message = "All the permissions are required for this app. Please grant the permissions to proceed.";
+
+                            new AlertDialog.Builder(this)
+                                    .setTitle(title)
+                                    .setMessage(message)
+                                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialogInterface, int i) {
+                                            try {
+                                                if(! hasPermissions(getApplicationContext(),
+                                                        getPermissions(getApplicationContext()))) {
+                                                    ActivityCompat.requestPermissions(MainActivity.this,
+                                                            getPermissions(getApplicationContext()), PERMISSION_ALL);
+                                                }
+                                            } catch (PackageManager.NameNotFoundException e) {
+                                                e.printStackTrace();
+                                            }
+                                        }
+                                    })
+                                    .setCancelable(false)
+                                    .create()
+                                    .show();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public static String[] getPermissions(Context context)
+            throws PackageManager.NameNotFoundException {
+        PackageInfo info = context.getPackageManager().getPackageInfo(
+                context.getPackageName(), PackageManager.GET_PERMISSIONS);
+
+        return info.requestedPermissions;
+    }
 }
+
