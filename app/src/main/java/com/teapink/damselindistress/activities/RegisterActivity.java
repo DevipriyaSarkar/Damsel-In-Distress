@@ -166,11 +166,11 @@ public class RegisterActivity extends AppCompatActivity {
     }
 
     private boolean isPhoneValid(String phone) {
-        return phone.trim().length() >= 10 || !phone.equals("");
+        return phone.trim().length() >= 10;
     }
 
     private boolean isPasswordValid(String password) {
-        return password.trim().length() > 0 || !password.equals("");
+        return password.trim().length() > 0;
     }
 
     /**
